@@ -13,13 +13,13 @@ export const SelectedWallet = () => {
   const [accountBalance, setAccountBalance] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [currentChain, setCurrentChain] = useState<IChainData>();
+
   const {
     selectedWallet,
     selectedAccount,
     disconnectWallet,
     getAccountBalance,
   } = useWalletProvider();
-
   const getBalanceData = useCallback(async () => {
     setLoading(true);
     try {
@@ -51,7 +51,7 @@ export const SelectedWallet = () => {
   }, [getBalanceData, selectedAccount, selectedWallet?.provider]);
 
   return (
-    <Flex>
+    <Flex vertical justify="center" align="center" gap={16}>
       {selectedAccount && (
         <Card
           extra={

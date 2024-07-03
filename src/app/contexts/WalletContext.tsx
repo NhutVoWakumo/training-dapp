@@ -32,6 +32,9 @@ declare global {
   interface WindowEventMap {
     "eip6963:announceProvider": CustomEvent;
   }
+  interface Window {
+    ethereum?: any;
+  }
 }
 
 const initialValue: WalletProviderContext = {
@@ -100,6 +103,14 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
     return () =>
       window.removeEventListener("eip6963:announceProvider", onAnnouncement);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedWalletRdns) return;
+
+    const provider = wallets[selectedWalletRdns].provider;
+
+    window.ethereum.on("chainChanged", () => window.location.reload());
   }, []);
 
   const connectWallet = useCallback(

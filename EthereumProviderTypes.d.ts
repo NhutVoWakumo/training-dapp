@@ -17,6 +17,19 @@ type EIP6963AnnounceProviderEvent = {
   };
 };
 
+interface EIP6963RequestProviderEvent extends Event {
+  type: "eip6963:requestProvider";
+}
+
+interface EIP6963AnnounceProviderEvent extends CustomEvent {
+  type: "eip6963:announceProvider";
+  detail: EIP6963ProviderDetail;
+}
+
+interface ProviderConnectInfo {
+  readonly chainId: string;
+}
+
 interface EIP1193Provider {
   isStatus?: boolean;
   host?: string;
@@ -39,4 +52,3 @@ interface WalletError {
   code?: string;
   message?: string;
 }
-s;
