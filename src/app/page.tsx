@@ -1,4 +1,5 @@
-import { SwitchChain, WalletError, WalletList } from "./components";
+import { Space } from "antd";
+import { SwitchChain, Transfer, WalletError, WalletList } from "./components";
 import { SelectedWallet } from "./components/SelectedWallet";
 import { AppContext } from "./contexts";
 
@@ -9,7 +10,10 @@ export default function Home() {
         <WalletList />
         <hr />
         <SelectedWallet />
-        <SwitchChain />
+        <Space>
+          <SwitchChain />
+          <Transfer />
+        </Space>
         <WalletError />
       </main>
     </AppContext>

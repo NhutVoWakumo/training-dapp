@@ -6,6 +6,7 @@ import { useWalletProvider } from "../hooks";
 import { Button } from "antd";
 import { ChainList } from "./ChainList";
 import { IChainData } from "../interfaces";
+import { formatChainAsHex } from "../utils";
 
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
@@ -14,12 +15,13 @@ export const SwitchChain = () => {
 
   const switchChain = useCallback(
     async (provider: EIP1193Provider, chain: IChainData) => {
-      console.log("hex chainID:", toBeHex(chain.chainId));
+      console.log("hex chainID:", formatChainAsHex(chain.chainId));
       try {
         await provider.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: toBeHex(chain.chainId) }],
+          params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
+        window.location.reload();
       } catch (switchError) {
         const error = switchError as WalletError;
         // This error code indicates that the chain has not been added to MetaMask.
@@ -29,13 +31,14 @@ export const SwitchChain = () => {
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: toBeHex(chain.chainId),
+                  chainId: formatChainAsHex(chain.chainId),
                   chainName: chain.name,
                   rpcUrls: chain.rpc,
                   nativeCurrency: chain.nativeCurrency,
                 },
               ],
             });
+            window.location.reload();
           } catch (addError) {
             // Handle "add" error.
             console.error(addError);
@@ -44,8 +47,6 @@ export const SwitchChain = () => {
           // Handle other "switch" errors.
           console.error(switchError);
         }
-      } finally {
-        window.location.reload();
       }
     },
     []

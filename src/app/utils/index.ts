@@ -1,3 +1,5 @@
+import { parseUnits, toBeHex } from "ethers";
+
 export const formatBalance = (rawBalance: string) => {
   const balance = (parseInt(rawBalance) / 1000000000000000000).toFixed(2);
   return balance;
@@ -13,4 +15,12 @@ export const formatAddress = (addr: string) => {
   return `${upperAfterLastTwo.substring(0, 5)}...${upperAfterLastTwo.substring(
     39
   )}`;
+};
+
+export const formatChainAsHex = (chainId: number) => {
+  return `0x${chainId.toString(16)}`;
+};
+
+export const formatValueToHexWei = (value: string) => {
+  return toBeHex(parseUnits(value, "ether"));
 };
