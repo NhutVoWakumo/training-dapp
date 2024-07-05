@@ -1,5 +1,11 @@
 import { Space } from "antd";
-import { SwitchChain, Transfer, WalletError, WalletList } from "./components";
+import {
+  SignMessage,
+  SwitchChain,
+  Transfer,
+  WalletError,
+  WalletList,
+} from "./components";
 import { SelectedWallet } from "./components/SelectedWallet";
 import { AppContext } from "./contexts";
 
@@ -13,6 +19,7 @@ export default function Home() {
         <Space>
           <SwitchChain />
           <Transfer />
+          <SignMessage />
         </Space>
         <WalletError />
       </main>

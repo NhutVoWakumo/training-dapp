@@ -4,3 +4,4 @@ export * from "./ChainList";
 export * from "./SelectedWallet";
 export * from "./SwitchChain";
 export * from "./Transfer";
+export * from "./SignMessage";

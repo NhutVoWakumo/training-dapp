@@ -24,3 +24,7 @@ export const formatChainAsHex = (chainId: number) => {
 export const formatValueToHexWei = (value: string) => {
   return toBeHex(parseUnits(value, "ether"));
 };
+
+export const formatHexEncodedMessage = (message: string) => {
+  return `0x${Buffer.from(message, "utf8").toString("hex")}`;
+};
