@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Form, Input, InputNumber, Modal } from "antd";
+import { ethers } from "ethers";
 import React, { useCallback, useState } from "react";
 import { useWalletProvider } from "../hooks";
 import { formatValueToHexWei } from "../utils";
@@ -16,7 +17,7 @@ export const Transfer = () => {
     try {
       const values = await form?.validateFields();
       const { address, value } = values;
-      const transactionHash = await selectedWallet?.provider.request({
+      const transactionHash = (await selectedWallet?.provider.request({
         method: "eth_sendTransaction",
         params: [
           {
@@ -25,8 +26,14 @@ export const Transfer = () => {
             value: formatValueToHexWei(value.toString()),
           },
         ],
-      });
+      })) as string;
       console.log(transactionHash);
+      const provider = new ethers.EtherscanProvider(
+        "sepolia",
+        process.env.ETHERSCAN_API_KEY
+      );
+      const receipt = await provider.waitForTransaction(transactionHash);
+      console.log(receipt);
     } catch (error) {
       console.error(error);
     } finally {
