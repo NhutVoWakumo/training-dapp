@@ -105,13 +105,41 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       window.removeEventListener("eip6963:announceProvider", onAnnouncement);
   }, []);
 
+  const handleAccountChange = useCallback(
+    (accounts: string[]) => {
+      if (accounts.length <= 0) return;
+
+      const account = accounts[0];
+
+      setSelectedAccountByWalletRdns((currentAccounts) => ({
+        ...currentAccounts,
+        [selectedWalletRdns as string]: account,
+      }));
+
+      localStorage.setItem(
+        "selectedAccountByWalletRdns",
+        JSON.stringify({
+          ...selectedAccountByWalletRdns,
+          [selectedWalletRdns as string]: account,
+        })
+      );
+    },
+    [selectedAccountByWalletRdns, selectedWalletRdns]
+  );
+
   useEffect(() => {
-    if (!selectedWalletRdns) return;
-
-    const provider = wallets[selectedWalletRdns].provider;
-
     window.ethereum.on("chainChanged", () => window.location.reload());
-  }, []);
+    window.ethereum.on("accountsChanged", (accounts: string[]) =>
+      handleAccountChange(accounts)
+    );
+
+    return () => {
+      window.ethereum.off("chainChanged", () => window.location.reload());
+      window.ethereum.off("accountsChanged", (accounts: string[]) =>
+        handleAccountChange(accounts)
+      );
+    };
+  }, [handleAccountChange]);
 
   const connectWallet = useCallback(
     async (walletRdns: string) => {
