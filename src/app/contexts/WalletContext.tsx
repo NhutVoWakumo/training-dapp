@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { ethers, toBigInt, formatEther } from "ethers";
+import { ethers, formatEther, toBigInt } from "ethers";
 
 // Type alias for a record where the keys are wallet identifiers and the values are account
 // addresses or null.
@@ -19,6 +19,7 @@ interface WalletProviderContext {
   selectedWallet: EIP6963ProviderDetail | null; // The selected wallet.
   selectedAccount: string | null; // The selected account address.
   errorMessage: string | null; // An error message.
+  chainId: string;
   connectWallet: (walletUuid: string) => Promise<void>; // Function to connect wallets.
   disconnectWallet: () => void; // Function to disconnect wallets.
   clearError: () => void;
@@ -42,6 +43,7 @@ const initialValue: WalletProviderContext = {
   selectedWallet: null,
   selectedAccount: null,
   errorMessage: null,
+  chainId: "",
   connectWallet: async (walletUuid: string) => {},
   disconnectWallet: () => {},
   clearError: () => {},
@@ -67,43 +69,11 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
   const [selectedAccountByWalletRdns, setSelectedAccountByWalletRdns] =
     useState<SelectedAccountByWallet>({});
+  const [selectedChain, setSelectedChain] = useState<string>("");
 
   const [errorMessage, setErrorMessage] = useState("");
   const clearError = () => setErrorMessage("");
   const setError = (error: string) => setErrorMessage(error);
-
-  useEffect(() => {
-    const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");
-    const savedSelectedAccountByWalletRdns = localStorage.getItem(
-      "selectedAccountByWalletRdns"
-    );
-
-    if (savedSelectedAccountByWalletRdns) {
-      setSelectedAccountByWalletRdns(
-        JSON.parse(savedSelectedAccountByWalletRdns)
-      );
-    }
-
-    function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
-      setWallets((currentWallets) => ({
-        ...currentWallets,
-        [event.detail.info.rdns]: event.detail,
-      }));
-
-      if (
-        savedSelectedWalletRdns &&
-        event.detail.info.rdns === savedSelectedWalletRdns
-      ) {
-        setSelectedWalletRdns(savedSelectedWalletRdns);
-      }
-    }
-
-    window.addEventListener("eip6963:announceProvider", onAnnouncement);
-    window.dispatchEvent(new Event("eip6963:requestProvider"));
-
-    return () =>
-      window.removeEventListener("eip6963:announceProvider", onAnnouncement);
-  }, []);
 
   const handleAccountChange = useCallback(
     (accounts: string[]) => {
@@ -127,19 +97,20 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [selectedAccountByWalletRdns, selectedWalletRdns]
   );
 
-  useEffect(() => {
-    window.ethereum.on("chainChanged", () => window.location.reload());
-    window.ethereum.on("accountsChanged", (accounts: string[]) =>
-      handleAccountChange(accounts)
-    );
+  const getChainId = useCallback(async () => {
+    if (!window.ethereum) return "";
 
-    return () => {
-      window.ethereum.off("chainChanged", () => window.location.reload());
-      window.ethereum.off("accountsChanged", (accounts: string[]) =>
-        handleAccountChange(accounts)
-      );
-    };
-  }, [handleAccountChange]);
+    const chainId = (await window.ethereum.request({
+      method: "eth_chainId",
+      params: [],
+    })) as string;
+
+    const convertedChainId = BigInt(chainId).toString();
+
+    setSelectedChain(convertedChainId);
+
+    return convertedChainId;
+  }, []);
 
   const connectWallet = useCallback(
     async (walletRdns: string) => {
@@ -219,6 +190,57 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   }, [selectedWalletRdns, wallets]);
 
+  useEffect(() => {
+    const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");
+    const savedSelectedAccountByWalletRdns = localStorage.getItem(
+      "selectedAccountByWalletRdns"
+    );
+
+    if (savedSelectedAccountByWalletRdns) {
+      setSelectedAccountByWalletRdns(
+        JSON.parse(savedSelectedAccountByWalletRdns)
+      );
+    }
+
+    function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
+      setWallets((currentWallets) => ({
+        ...currentWallets,
+        [event.detail.info.rdns]: event.detail,
+      }));
+
+      if (
+        savedSelectedWalletRdns &&
+        event.detail.info.rdns === savedSelectedWalletRdns
+      ) {
+        setSelectedWalletRdns(savedSelectedWalletRdns);
+      }
+    }
+
+    window.addEventListener("eip6963:announceProvider", onAnnouncement);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+
+    return () =>
+      window.removeEventListener("eip6963:announceProvider", onAnnouncement);
+  }, []);
+
+  useEffect(() => {
+    window.ethereum.on("chainChanged", () => window.location.reload());
+    window.ethereum.on("accountsChanged", (accounts: string[]) =>
+      handleAccountChange(accounts)
+    );
+
+    return () => {
+      window.ethereum.off("chainChanged", () => window.location.reload());
+      window.ethereum.off("accountsChanged", (accounts: string[]) =>
+        handleAccountChange(accounts)
+      );
+    };
+  }, [handleAccountChange]);
+
+  useEffect(() => {
+    getChainId();
+  }, [getChainId]);
+
   const contextValue: WalletProviderContext = {
     wallets,
     selectedWallet:
@@ -227,6 +249,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       selectedWalletRdns === null
         ? null
         : selectedAccountByWalletRdns[selectedWalletRdns],
+    chainId: selectedChain,
     errorMessage,
     connectWallet,
     disconnectWallet,

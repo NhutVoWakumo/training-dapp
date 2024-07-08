@@ -5,3 +5,4 @@ export * from "./SelectedWallet";
 export * from "./SwitchChain";
 export * from "./Transfer";
 export * from "./SignMessage";
+export * from "./TokenList";

@@ -1,11 +1,12 @@
 "use client";
 
 import { Avatar, Button, Card, Flex, Image, Space } from "antd";
-import { useWalletProvider } from "../hooks";
-import { formatAddress } from "../utils";
 import { useCallback, useEffect, useState } from "react";
-import { chainData } from "../constants";
+
 import { IChainData } from "../interfaces";
+import { chainData } from "../constants";
+import { formatAddress } from "../utils";
+import { useWalletProvider } from "../hooks";
 
 const { Meta } = Card;
 
@@ -19,7 +20,9 @@ export const SelectedWallet = () => {
     selectedAccount,
     disconnectWallet,
     getAccountBalance,
+    chainId,
   } = useWalletProvider();
+
   const getBalanceData = useCallback(async () => {
     setLoading(true);
     try {
@@ -28,10 +31,6 @@ export const SelectedWallet = () => {
         selectedWallet?.provider,
         selectedAccount as string
       );
-
-      const chainId = (await selectedWallet?.provider.request({
-        method: "eth_chainId",
-      })) as string;
 
       const chain = chainData.find(
         (item) => BigInt(item.chainId) === BigInt(chainId)
@@ -44,7 +43,7 @@ export const SelectedWallet = () => {
     } finally {
       setLoading(false);
     }
-  }, [getAccountBalance, selectedAccount, selectedWallet?.provider]);
+  }, [chainId, getAccountBalance, selectedAccount, selectedWallet?.provider]);
 
   useEffect(() => {
     getBalanceData();
