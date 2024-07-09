@@ -1,11 +1,13 @@
 "use client";
 
-import { Avatar, Button, List } from "antd";
+import { Avatar, Button, Form, Input, InputNumber, List, Modal } from "antd";
 import { ERC20ABI, sepoliaChainId, sepoliaERC20Tokens } from "../constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ethers, formatUnits, getAddress } from "ethers";
+import { ethers, formatUnits, getAddress, parseUnits } from "ethers";
 
+import { TransactionResponse } from "ethers";
 import { formatAddress } from "../utils";
+import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
 
 interface ITokenData {
@@ -17,19 +19,27 @@ interface ITokenData {
 }
 
 export const TokenList = () => {
-  const { selectedWallet, chainId, selectedAccount } = useWalletProvider();
+  const [form] = useForm();
   const [tokenList, setTokenList] = useState<ITokenData[]>([]);
+  const [currentToken, setCurrentToken] = useState<ITokenData>();
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const { selectedWallet, chainId, selectedAccount } = useWalletProvider();
 
   const infuraProvider = useMemo(() => {
     return new ethers.InfuraProvider(
       "sepolia",
-      //   process.env.ETHERSCAN_API_KEY
-      //   process.env.INFURA_API_KEY
-      "0b9ea30f1f06497ca69e4af6522d9c8d"
+      process.env.NEXT_PUBLIC_INFURA_API_KEY
     );
   }, []);
 
-  const defaultProvider = ethers.getDefaultProvider("sepolia");
+  const defaultProvider = useMemo(() => {
+    if (selectedWallet?.provider)
+      return new ethers.BrowserProvider(selectedWallet?.provider);
+
+    if (window.ethereum) return new ethers.BrowserProvider(window.ethereum);
+
+    return undefined;
+  }, [selectedWallet?.provider]);
 
   const ethersScript = useCallback(
     async (
@@ -41,13 +51,6 @@ export const TokenList = () => {
         const balanceOf = await erc20.balanceOf(accountAddress);
         const symbol = await erc20.symbol();
         const decimals = await erc20.decimals();
-
-        console.log(
-          `The Balance of ${selectedAccount} is: ${formatUnits(
-            balanceOf,
-            decimals
-          )} ${symbol} (decimals: ${decimals}, value: ${balanceOf})`
-        );
 
         setTokenList((prevList) => [
           ...prevList,
@@ -63,7 +66,7 @@ export const TokenList = () => {
         console.error(error);
       }
     },
-    [selectedAccount]
+    []
   );
 
   const addTokenToWallet = useCallback(async (token: ITokenData) => {
@@ -83,6 +86,35 @@ export const TokenList = () => {
       console.log(error);
     }
   }, []);
+
+  const transferToken = useCallback(
+    async (token?: ITokenData) => {
+      if (!token) return;
+
+      try {
+        const values = await form?.validateFields();
+        const { address, value } = values;
+        const signer = await defaultProvider?.getSigner();
+        const contract = new ethers.Contract(token.address, ERC20ABI, signer);
+        const transactionResponse = (await contract.transfer(
+          address,
+          parseUnits(value, Number(token.decimals))
+        )) as TransactionResponse;
+        console.log(transactionResponse);
+        const provider = new ethers.EtherscanProvider(
+          "sepolia",
+          process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
+        );
+        const receipt = await provider.waitForTransaction(
+          transactionResponse.hash
+        );
+        console.log(receipt);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [defaultProvider, form]
+  );
 
   useEffect(() => {
     if (!selectedAccount) return;
@@ -115,7 +147,10 @@ export const TokenList = () => {
                   </Button>,
                   <Button
                     key={"transfer-token"}
-                    // onClick={() => transferToken(item)}
+                    onClick={() => {
+                      setCurrentToken(item);
+                      setOpenModal(true);
+                    }}
                   >
                     Transfer
                   </Button>,
@@ -129,6 +164,24 @@ export const TokenList = () => {
               </List.Item>
             )}
           />
+          <Modal
+            open={openModal}
+            onCancel={() => setOpenModal(false)}
+            onOk={() => transferToken(currentToken)}
+          >
+            <Form form={form} layout="vertical">
+              <Form.Item label={"Address"} name={"address"}>
+                <Input />
+              </Form.Item>
+              <Form.Item label={"Value"} name={"value"}>
+                <InputNumber
+                  style={{ width: "100%" }}
+                  stringMode
+                  controls={false}
+                />
+              </Form.Item>
+            </Form>
+          </Modal>
         </div>
       )}
     </>

@@ -1,16 +1,18 @@
 "use client";
 
 import { Button, Form, Input, InputNumber, Modal } from "antd";
-import { ethers } from "ethers";
 import React, { useCallback, useState } from "react";
-import { useWalletProvider } from "../hooks";
+
+import { ethers } from "ethers";
 import { formatValueToHexWei } from "../utils";
+import { sepoliaChainId } from "../constants";
 import { useForm } from "antd/es/form/Form";
+import { useWalletProvider } from "../hooks";
 
 export const Transfer = () => {
   const [form] = useForm();
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const { selectedWallet, selectedAccount } = useWalletProvider();
+  const { selectedWallet, selectedAccount, chainId } = useWalletProvider();
 
   const handleTransfer = useCallback(async () => {
     if (!selectedWallet || !selectedAccount) return;
@@ -28,18 +30,20 @@ export const Transfer = () => {
         ],
       })) as string;
       console.log(transactionHash);
-      const provider = new ethers.EtherscanProvider(
-        "sepolia",
-        process.env.ETHERSCAN_API_KEY
-      );
-      const receipt = await provider.waitForTransaction(transactionHash);
-      console.log(receipt);
+      if (chainId.toString() === sepoliaChainId) {
+        const provider = new ethers.EtherscanProvider(
+          "sepolia",
+          process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
+        );
+        const receipt = await provider.waitForTransaction(transactionHash);
+        console.log(receipt);
+      }
     } catch (error) {
       console.error(error);
     } finally {
       setOpenModal(false);
     }
-  }, [selectedAccount, selectedWallet, form]);
+  }, [selectedWallet, selectedAccount, form, chainId]);
 
   return (
     <>
