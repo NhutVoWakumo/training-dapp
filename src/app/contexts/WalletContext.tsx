@@ -7,22 +7,24 @@ import {
   useEffect,
   useState,
 } from "react";
-import { ethers, formatEther, toBigInt } from "ethers";
 
-// Type alias for a record where the keys are wallet identifiers and the values are account
-// addresses or null.
+import { formatEther } from "ethers";
+
 type SelectedAccountByWallet = Record<string, string | null>;
 
-// Context interface for the EIP-6963 provider.
 interface WalletProviderContext {
-  wallets: Record<string, EIP6963ProviderDetail>; // A list of wallets.
-  selectedWallet: EIP6963ProviderDetail | null; // The selected wallet.
-  selectedAccount: string | null; // The selected account address.
-  errorMessage: string | null; // An error message.
+  wallets: Record<string, EIP6963ProviderDetail>;
+  selectedWallet: EIP6963ProviderDetail | null;
+  selectedAccount: string | null;
+  errorMessage: string | null;
   chainId: string;
-  connectWallet: (walletUuid: string) => Promise<void>; // Function to connect wallets.
-  disconnectWallet: () => void; // Function to disconnect wallets.
+  globalLoading: boolean;
+
+  connectWallet: (walletUuid: string) => Promise<void>;
+  disconnectWallet: () => void;
+  triggerLoading: (loading: boolean) => void;
   clearError: () => void;
+  processErrorMessage: (error: any) => void;
   getAccountBalance: (
     walletProvider: EIP1193Provider,
     address: string
@@ -44,9 +46,13 @@ const initialValue: WalletProviderContext = {
   selectedAccount: null,
   errorMessage: null,
   chainId: "",
+  globalLoading: false,
+
   connectWallet: async (walletUuid: string) => {},
   disconnectWallet: () => {},
+  triggerLoading: (loading: boolean) => {},
   clearError: () => {},
+  processErrorMessage: (error: any) => {},
   getAccountBalance: async (
     walletProvider: EIP1193Provider,
     address: string
@@ -58,8 +64,6 @@ const initialValue: WalletProviderContext = {
 export const WalletProviderContext =
   createContext<WalletProviderContext>(initialValue);
 
-// The WalletProvider component wraps all other components in the dapp, providing them with the
-// necessary data and functions related to wallets.
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>(
     {}
@@ -70,10 +74,16 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [selectedAccountByWalletRdns, setSelectedAccountByWalletRdns] =
     useState<SelectedAccountByWallet>({});
   const [selectedChain, setSelectedChain] = useState<string>("");
-
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+
   const clearError = () => setErrorMessage("");
-  const setError = (error: string) => setErrorMessage(error);
+  const triggerLoading = (value: boolean) => setLoading(value);
+
+  const processErrorMessage = useCallback((error: any) => {
+    const walletError: WalletError = error as WalletError;
+    setErrorMessage(`${walletError.message}`);
+  }, []);
 
   const handleAccountChange = useCallback(
     (accounts: string[]) => {
@@ -100,21 +110,31 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const getChainId = useCallback(async () => {
     if (!window.ethereum) return "";
 
-    const chainId = (await window.ethereum.request({
-      method: "eth_chainId",
-      params: [],
-    })) as string;
+    setLoading(true);
+    try {
+      const chainId = (await window.ethereum.request({
+        method: "eth_chainId",
+        params: [],
+      })) as string;
 
-    const convertedChainId = BigInt(chainId).toString();
+      const convertedChainId = BigInt(chainId).toString();
 
-    setSelectedChain(convertedChainId);
+      setSelectedChain(convertedChainId);
 
-    return convertedChainId;
-  }, []);
+      return convertedChainId;
+    } catch (error) {
+      console.error(error);
+      processErrorMessage(error);
+      return "";
+    } finally {
+      setLoading(false);
+    }
+  }, [processErrorMessage]);
 
   const connectWallet = useCallback(
     async (walletRdns: string) => {
       console.log("connecting");
+      setLoading(true);
       try {
         const wallet = wallets[walletRdns];
         const accounts = (await wallet.provider.request({
@@ -139,17 +159,17 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to connect to provider:", error);
-        const walletError: WalletError = error as WalletError;
-        setError(
-          `Code: ${walletError.code} \nError Message: ${walletError.message}`
-        );
+        processErrorMessage(error);
+      } finally {
+        setLoading(false);
       }
     },
-    [wallets, selectedAccountByWalletRdns]
+    [wallets, selectedAccountByWalletRdns, processErrorMessage]
   );
 
   const getAccountBalance = useCallback(
     async (walletProvider: EIP1193Provider, address: string) => {
+      setLoading(true);
       try {
         if (!address) return "0";
 
@@ -162,14 +182,18 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         return formatEther(weiValue);
       } catch (error) {
         console.error("Failed to get balance:", error);
+        processErrorMessage(error);
         return "0";
+      } finally {
+        setLoading(false);
       }
     },
-    []
+    [processErrorMessage]
   );
 
   const disconnectWallet = useCallback(async () => {
     if (selectedWalletRdns) {
+      setLoading(true);
       setSelectedAccountByWalletRdns((currentAccounts) => ({
         ...currentAccounts,
         [selectedWalletRdns]: null,
@@ -186,9 +210,12 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         });
       } catch (error) {
         console.error("Failed to revoke permissions:", error);
+        processErrorMessage(error);
+      } finally {
+        setLoading(false);
       }
     }
-  }, [selectedWalletRdns, wallets]);
+  }, [processErrorMessage, selectedWalletRdns, wallets]);
 
   useEffect(() => {
     const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");
@@ -250,10 +277,13 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         ? null
         : selectedAccountByWalletRdns[selectedWalletRdns],
     chainId: selectedChain,
+    globalLoading: loading,
+    triggerLoading,
     errorMessage,
     connectWallet,
     disconnectWallet,
     clearError,
+    processErrorMessage,
     getAccountBalance,
   };
 

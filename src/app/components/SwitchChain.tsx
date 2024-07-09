@@ -1,21 +1,23 @@
 "use client";
 
-import { toBeHex } from "ethers";
 import React, { useCallback, useState } from "react";
-import { useWalletProvider } from "../hooks";
+
 import { Button } from "antd";
 import { ChainList } from "./ChainList";
 import { IChainData } from "../interfaces";
 import { formatChainAsHex } from "../utils";
+import { toBeHex } from "ethers";
+import { useWalletProvider } from "../hooks";
 
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
     useState<boolean>(false);
-  const { selectedWallet } = useWalletProvider();
+  const { selectedWallet, triggerLoading, globalLoading, processErrorMessage } =
+    useWalletProvider();
 
   const switchChain = useCallback(
     async (provider: EIP1193Provider, chain: IChainData) => {
-      console.log("hex chainID:", formatChainAsHex(chain.chainId));
+      triggerLoading(true);
       try {
         await provider.request({
           method: "wallet_switchEthereumChain",
@@ -42,27 +44,35 @@ export const SwitchChain = () => {
           } catch (addError) {
             // Handle "add" error.
             console.error(addError);
+            processErrorMessage(addError);
           }
         } else {
           // Handle other "switch" errors.
           console.error(switchError);
+          processErrorMessage(switchError);
         }
+      } finally {
+        triggerLoading(false);
       }
     },
-    []
+    [processErrorMessage, triggerLoading]
   );
 
   return (
     <div>
       {selectedWallet && (
         <>
-          <Button onClick={() => setOpenSelectChainModal(true)}>
+          <Button
+            onClick={() => setOpenSelectChainModal(true)}
+            loading={globalLoading}
+          >
             Switch Chain
           </Button>
           <ChainList
             open={openSelectChainModal}
             onCancel={() => setOpenSelectChainModal(false)}
             onSwitchChain={switchChain}
+            loading={globalLoading}
           />
         </>
       )}

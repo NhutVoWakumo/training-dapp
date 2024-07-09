@@ -1,15 +1,23 @@
 "use client";
 
 import React, { useCallback } from "react";
-import { useWalletProvider } from "../hooks";
+
 import { Button } from "antd";
 import { formatHexEncodedMessage } from "../utils";
+import { useWalletProvider } from "../hooks";
 
 export const SignMessage = () => {
-  const { selectedWallet, selectedAccount } = useWalletProvider();
+  const {
+    selectedWallet,
+    selectedAccount,
+    processErrorMessage,
+    triggerLoading,
+    globalLoading,
+  } = useWalletProvider();
 
   const signMessage = useCallback(
     async (message: string) => {
+      triggerLoading(true);
       try {
         const from = selectedAccount;
         const msg = formatHexEncodedMessage(message);
@@ -21,15 +29,26 @@ export const SignMessage = () => {
         console.log(sign);
       } catch (err) {
         console.error(err);
+        processErrorMessage(err);
+      } finally {
+        triggerLoading(false);
       }
     },
-    [selectedAccount, selectedWallet?.provider]
+    [
+      processErrorMessage,
+      selectedAccount,
+      selectedWallet?.provider,
+      triggerLoading,
+    ]
   );
 
   return (
     <div>
       {selectedWallet && (
-        <Button onClick={() => signMessage("This is a hello message")}>
+        <Button
+          onClick={() => signMessage("This is a hello message")}
+          loading={globalLoading}
+        >
           Sign hello message
         </Button>
       )}

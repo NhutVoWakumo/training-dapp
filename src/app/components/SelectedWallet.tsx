@@ -21,6 +21,7 @@ export const SelectedWallet = () => {
     disconnectWallet,
     getAccountBalance,
     chainId,
+    processErrorMessage,
   } = useWalletProvider();
 
   const getBalanceData = useCallback(async () => {
@@ -40,10 +41,17 @@ export const SelectedWallet = () => {
       setCurrentChain(chain);
     } catch (error) {
       console.error(error);
+      processErrorMessage(error);
     } finally {
       setLoading(false);
     }
-  }, [chainId, getAccountBalance, selectedAccount, selectedWallet?.provider]);
+  }, [
+    chainId,
+    getAccountBalance,
+    processErrorMessage,
+    selectedAccount,
+    selectedWallet?.provider,
+  ]);
 
   useEffect(() => {
     getBalanceData();
@@ -59,7 +67,6 @@ export const SelectedWallet = () => {
             </Button>
           }
           title={<div>{selectedWallet?.info.name}</div>}
-          style={{ width: "500px" }}
           loading={loading}
         >
           <Meta

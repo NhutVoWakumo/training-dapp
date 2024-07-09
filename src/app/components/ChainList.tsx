@@ -1,8 +1,9 @@
 import { Form, Modal, ModalProps, Select } from "antd";
-import { useForm } from "antd/es/form/Form";
 import React, { useCallback } from "react";
-import { chainData } from "../constants";
+
 import { IChainData } from "../interfaces";
+import { chainData } from "../constants";
+import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
 
 interface ChainListProps extends Omit<ModalProps, "onCancel" | "onOk"> {
@@ -26,9 +27,6 @@ export const ChainList = ({
     const { chainId } = values;
 
     const chain = chainData.find((item) => item.chainId === chainId);
-
-    console.log("chainId:", chainId);
-    console.log("chain:", chain);
 
     if (!chain) {
       onCancel?.();

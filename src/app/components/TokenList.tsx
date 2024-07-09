@@ -1,10 +1,21 @@
 "use client";
 
-import { Avatar, Button, Form, Input, InputNumber, List, Modal } from "antd";
+import {
+  Avatar,
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  List,
+  Modal,
+  Spin,
+  message,
+} from "antd";
 import { ERC20ABI, sepoliaChainId, sepoliaERC20Tokens } from "../constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ethers, formatUnits, getAddress, parseUnits } from "ethers";
 
+import { JsonRpcError } from "ethers";
 import { TransactionResponse } from "ethers";
 import { formatAddress } from "../utils";
 import { useForm } from "antd/es/form/Form";
@@ -23,7 +34,15 @@ export const TokenList = () => {
   const [tokenList, setTokenList] = useState<ITokenData[]>([]);
   const [currentToken, setCurrentToken] = useState<ITokenData>();
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const { selectedWallet, chainId, selectedAccount } = useWalletProvider();
+  const [localLoading, setLocalLoading] = useState<boolean>(false);
+  const {
+    selectedWallet,
+    chainId,
+    selectedAccount,
+    triggerLoading,
+    processErrorMessage,
+    globalLoading,
+  } = useWalletProvider();
 
   const infuraProvider = useMemo(() => {
     return new ethers.InfuraProvider(
@@ -35,8 +54,6 @@ export const TokenList = () => {
   const defaultProvider = useMemo(() => {
     if (selectedWallet?.provider)
       return new ethers.BrowserProvider(selectedWallet?.provider);
-
-    if (window.ethereum) return new ethers.BrowserProvider(window.ethereum);
 
     return undefined;
   }, [selectedWallet?.provider]);
@@ -64,33 +81,42 @@ export const TokenList = () => {
         ]);
       } catch (error) {
         console.error(error);
+        processErrorMessage(error);
       }
     },
-    []
+    [processErrorMessage]
   );
 
-  const addTokenToWallet = useCallback(async (token: ITokenData) => {
-    try {
-      await window.ethereum.request({
-        method: "wallet_watchAsset",
-        params: {
-          type: "ERC20",
-          options: {
-            address: token.address,
-            symbol: token.symbol,
-            decimals: token.decimals,
+  const addTokenToWallet = useCallback(
+    async (token: ITokenData) => {
+      triggerLoading(true);
+      try {
+        await window.ethereum.request({
+          method: "wallet_watchAsset",
+          params: {
+            type: "ERC20",
+            options: {
+              address: token.address,
+              symbol: token.symbol,
+              decimals: token.decimals,
+            },
           },
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+        });
+      } catch (error) {
+        console.log(error);
+        processErrorMessage(error);
+      } finally {
+        triggerLoading(false);
+      }
+    },
+    [processErrorMessage, triggerLoading]
+  );
 
   const transferToken = useCallback(
     async (token?: ITokenData) => {
       if (!token) return;
 
+      triggerLoading(true);
       try {
         const values = await form?.validateFields();
         const { address, value } = values;
@@ -109,16 +135,20 @@ export const TokenList = () => {
           transactionResponse.hash
         );
         console.log(receipt);
+        message.success("Transaction completed");
       } catch (error) {
-        console.error(error);
+        processErrorMessage(error);
+      } finally {
+        triggerLoading(false);
       }
     },
-    [defaultProvider, form]
+    [defaultProvider, form, processErrorMessage, triggerLoading]
   );
 
   useEffect(() => {
     if (!selectedAccount) return;
     setTokenList([]);
+    setLocalLoading(true);
     sepoliaERC20Tokens.forEach((item) => {
       const tokenAddress = getAddress(item.address);
       const accountAddress = getAddress(selectedAccount);
@@ -126,6 +156,7 @@ export const TokenList = () => {
 
       ethersScript(erc20, accountAddress, tokenAddress);
     });
+    setLocalLoading(false);
   }, [ethersScript, infuraProvider, selectedAccount]);
 
   return (
@@ -135,33 +166,37 @@ export const TokenList = () => {
           <List
             dataSource={tokenList}
             itemLayout="vertical"
+            loading={localLoading}
             renderItem={(item) => (
-              <List.Item
-                style={{ width: "100%" }}
-                actions={[
-                  <Button
-                    key={"add-token"}
-                    onClick={() => addTokenToWallet(item)}
-                  >
-                    Add token to wallet
-                  </Button>,
-                  <Button
-                    key={"transfer-token"}
-                    onClick={() => {
-                      setCurrentToken(item);
-                      setOpenModal(true);
-                    }}
-                  >
-                    Transfer
-                  </Button>,
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={<Avatar>{item.symbol}</Avatar>}
-                  title={formatAddress(item.address)}
-                  description={`Balance: ${item.balance}`}
-                />
-              </List.Item>
+              <Spin spinning={localLoading}>
+                <List.Item
+                  actions={[
+                    <Button
+                      key={"add-token"}
+                      onClick={() => addTokenToWallet(item)}
+                      loading={globalLoading}
+                    >
+                      Add token to wallet
+                    </Button>,
+                    <Button
+                      key={"transfer-token"}
+                      onClick={() => {
+                        setCurrentToken(item);
+                        setOpenModal(true);
+                      }}
+                      loading={globalLoading}
+                    >
+                      Transfer
+                    </Button>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={<Avatar>{item.symbol}</Avatar>}
+                    title={formatAddress(item.address)}
+                    description={`Balance: ${item.balance}`}
+                  />
+                </List.Item>
+              </Spin>
             )}
           />
           <Modal

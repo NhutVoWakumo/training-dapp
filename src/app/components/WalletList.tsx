@@ -1,7 +1,8 @@
 "use client";
 
-import { useWalletProvider } from "../hooks";
 import { Button, Flex, Image, Space, Spin, Typography } from "antd";
+
+import { useWalletProvider } from "../hooks";
 
 export const WalletList = () => {
   const { wallets, connectWallet, selectedWallet } = useWalletProvider();
