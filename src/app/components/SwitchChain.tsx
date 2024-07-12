@@ -11,21 +11,26 @@ import { useWalletProvider } from "../hooks";
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
     useState<boolean>(false);
-  const { triggerLoading, globalLoading, processErrorMessage, selectedWallet } =
-    useWalletProvider();
+  const {
+    triggerLoading,
+    globalLoading,
+    processErrorMessage,
+    selectedWallet,
+    getChainId,
+  } = useWalletProvider();
 
   const switchChain = useCallback(
     async (chain: IChainData) => {
+      if (!selectedWallet?.provider) return;
+
       triggerLoading(true);
       try {
         await selectedWallet?.provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
-        window.location.reload();
       } catch (switchError) {
         const error = switchError as WalletError;
-        // This error code indicates that the chain has not been added to MetaMask.
         if (Number(error.code) === 4902) {
           try {
             await selectedWallet?.provider.request({
@@ -39,7 +44,6 @@ export const SwitchChain = () => {
                 },
               ],
             });
-            window.location.reload();
           } catch (addError) {
             // Handle "add" error.
             console.error(addError);
@@ -53,8 +57,10 @@ export const SwitchChain = () => {
       } finally {
         triggerLoading(false);
       }
+
+      await getChainId();
     },
-    [processErrorMessage, triggerLoading]
+    [getChainId, processErrorMessage, selectedWallet?.provider, triggerLoading]
   );
 
   return (

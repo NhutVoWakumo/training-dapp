@@ -1,5 +1,4 @@
 import {
-  ErrorMessageWrapper,
   LoadingWrapper,
   SignMessage,
   SwitchChain,
@@ -16,19 +15,17 @@ export default function Home() {
   return (
     <AppContext>
       <LoadingWrapper>
-        <ErrorMessageWrapper>
-          <main className="flex min-h-screen flex-col items-center gap-10 bg-white">
-            <WalletList />
-            <hr />
-            <SelectedWallet />
-            <Space>
-              <SwitchChain />
-              <Transfer />
-              <SignMessage />
-            </Space>
-            <TokenList />
-          </main>
-        </ErrorMessageWrapper>
+        <main className="flex min-h-screen flex-col items-center gap-10 bg-white">
+          <WalletList />
+          <hr />
+          <SelectedWallet />
+          <Space>
+            <SwitchChain />
+            <Transfer />
+            <SignMessage />
+          </Space>
+          <TokenList />
+        </main>
       </LoadingWrapper>
     </AppContext>
   );
