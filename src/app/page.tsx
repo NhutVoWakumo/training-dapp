@@ -27,7 +27,6 @@ export default function Home() {
               <SignMessage />
             </Space>
             <TokenList />
-            {/* <WalletError /> */}
           </main>
         </ErrorMessageWrapper>
       </LoadingWrapper>

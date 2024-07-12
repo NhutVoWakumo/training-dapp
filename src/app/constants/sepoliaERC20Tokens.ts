@@ -6,7 +6,7 @@ export const sepoliaERC20Tokens = [
     address_label: null,
     name: "Ethereum Wrapped Filecoin",
     symbol: "wFIL",
-    decimals: "wFIL",
+    decimals: "18",
     logo: null,
     logo_hash: null,
     thumbnail: null,

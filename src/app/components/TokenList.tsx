@@ -91,7 +91,7 @@ export const TokenList = () => {
     async (token: ITokenData) => {
       triggerLoading(true);
       try {
-        await window.ethereum.request({
+        await selectedWallet?.provider.request({
           method: "wallet_watchAsset",
           params: {
             type: "ERC20",
@@ -100,7 +100,7 @@ export const TokenList = () => {
               symbol: token.symbol,
               decimals: token.decimals,
             },
-          },
+          } as any,
         });
       } catch (error) {
         console.log(error);
@@ -109,7 +109,7 @@ export const TokenList = () => {
         triggerLoading(false);
       }
     },
-    [processErrorMessage, triggerLoading]
+    [processErrorMessage, selectedWallet?.provider, triggerLoading]
   );
 
   const transferToken = useCallback(

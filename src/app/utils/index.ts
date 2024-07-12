@@ -1,3 +1,4 @@
+import { BigNumberish, formatEther } from "ethers";
 import { parseUnits, toBeHex } from "ethers";
 
 export const formatBalance = (rawBalance: string) => {
@@ -35,3 +36,10 @@ export const truncateText = (text: string, maxLength: number) => {
   }
   return text.slice(0, maxLength) + "...";
 };
+
+export function formatRoundEther(wei: BigNumberish): string {
+  let ether = formatEther(wei);
+  ether = (+ether).toFixed(4);
+
+  return ether;
+}

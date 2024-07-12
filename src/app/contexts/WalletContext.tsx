@@ -1,5 +1,6 @@
 "use client";
 
+import { BrowserProvider, ethers } from "ethers";
 import {
   PropsWithChildren,
   createContext,
@@ -7,8 +8,14 @@ import {
   useEffect,
   useState,
 } from "react";
+import {
+  useDisconnect,
+  useWalletInfo,
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from "@web3modal/ethers/react";
 
-import { formatEther } from "ethers";
+import { formatRoundEther } from "../utils";
 
 type SelectedAccountByWallet = Record<string, string | null>;
 
@@ -19,24 +26,20 @@ interface WalletProviderContext {
   errorMessage: string | null;
   chainId: string;
   globalLoading: boolean;
+  currentProvider: any;
+  currentBalance: string;
 
   connectWallet: (walletUuid: string) => Promise<void>;
   disconnectWallet: () => void;
   triggerLoading: (loading: boolean) => void;
   clearError: () => void;
   processErrorMessage: (error: any) => void;
-  getAccountBalance: (
-    walletProvider: EIP1193Provider,
-    address: string
-  ) => Promise<string>;
+  getAccountBalance: (address: string) => Promise<string>;
 }
 
 declare global {
   interface WindowEventMap {
     "eip6963:announceProvider": CustomEvent;
-  }
-  interface Window {
-    ethereum?: any;
   }
 }
 
@@ -47,16 +50,15 @@ const initialValue: WalletProviderContext = {
   errorMessage: null,
   chainId: "",
   globalLoading: false,
+  currentProvider: undefined,
+  currentBalance: "",
 
   connectWallet: async (walletUuid: string) => {},
   disconnectWallet: () => {},
   triggerLoading: (loading: boolean) => {},
   clearError: () => {},
   processErrorMessage: (error: any) => {},
-  getAccountBalance: async (
-    walletProvider: EIP1193Provider,
-    address: string
-  ) => {
+  getAccountBalance: async (address: string) => {
     return "";
   },
 };
@@ -65,6 +67,10 @@ export const WalletProviderContext =
   createContext<WalletProviderContext>(initialValue);
 
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
+  const { walletInfo } = useWalletInfo();
+  const { disconnect } = useDisconnect();
   const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>(
     {}
   );
@@ -76,6 +82,11 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [selectedChain, setSelectedChain] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [currentProvider, setCurrentProvider] = useState<BrowserProvider>();
+  const [currentAccount, setCurrentAccount] = useState<string | null>(null);
+  const [currentWallet, setCurrentWallet] =
+    useState<EIP6963ProviderDetail | null>(null);
+  const [currentBalance, setCurrentBalance] = useState<string>("0.0");
 
   const clearError = () => setErrorMessage("");
   const triggerLoading = (value: boolean) => setLoading(value);
@@ -108,14 +119,12 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 
   const getChainId = useCallback(async () => {
-    if (!window.ethereum) return "";
+    if (!currentProvider) return "";
 
     setLoading(true);
     try {
-      const chainId = (await window.ethereum.request({
-        method: "eth_chainId",
-        params: [],
-      })) as string;
+      const network = await currentProvider?.getNetwork();
+      const { chainId } = network;
 
       const convertedChainId = BigInt(chainId).toString();
 
@@ -129,24 +138,27 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [processErrorMessage]);
+  }, [currentProvider, processErrorMessage]);
 
   const connectWallet = useCallback(
-    async (walletRdns: string) => {
-      console.log("connecting");
+    async (walletName: string) => {
       setLoading(true);
+
       try {
-        const wallet = wallets[walletRdns];
+        const wallet = wallets[walletName];
         const accounts = (await wallet.provider.request({
           method: "eth_requestAccounts",
         })) as string[];
 
         if (accounts?.[0]) {
+          const ethersProvider = new BrowserProvider(wallet.provider);
           setSelectedWalletRdns(wallet.info.rdns);
           setSelectedAccountByWalletRdns((currentAccounts) => ({
             ...currentAccounts,
             [wallet.info.rdns]: accounts[0],
           }));
+
+          setCurrentProvider(ethersProvider);
 
           localStorage.setItem("selectedWalletRdns", wallet.info.rdns);
           localStorage.setItem(
@@ -164,22 +176,21 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         setLoading(false);
       }
     },
-    [wallets, selectedAccountByWalletRdns, processErrorMessage]
+    [processErrorMessage, wallets, selectedAccountByWalletRdns]
   );
 
   const getAccountBalance = useCallback(
-    async (walletProvider: EIP1193Provider, address: string) => {
+    async (address: string) => {
       setLoading(true);
       try {
-        if (!address) return "0";
+        if (!address || !currentProvider) return "0.0";
 
-        const balance = (await walletProvider.request({
-          method: "eth_getBalance",
-          params: [address, "latest"],
-        })) as string;
-        const weiValue = BigInt(balance);
+        const weiValue = await currentProvider?.getBalance(address);
 
-        return formatEther(weiValue);
+        const formattedBalance = formatRoundEther(weiValue);
+        setCurrentBalance(formattedBalance);
+
+        return formattedBalance;
       } catch (error) {
         console.error("Failed to get balance:", error);
         processErrorMessage(error);
@@ -188,10 +199,19 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         setLoading(false);
       }
     },
-    [processErrorMessage]
+    [currentProvider, processErrorMessage]
   );
 
   const disconnectWallet = useCallback(async () => {
+    if (isConnected) {
+      try {
+        await disconnect();
+      } catch (error) {
+        console.error("Failed to disconnect:", error);
+        processErrorMessage(error);
+      }
+    }
+
     if (selectedWalletRdns) {
       setLoading(true);
       setSelectedAccountByWalletRdns((currentAccounts) => ({
@@ -215,7 +235,13 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [processErrorMessage, selectedWalletRdns, wallets]);
+  }, [
+    disconnect,
+    isConnected,
+    processErrorMessage,
+    selectedWalletRdns,
+    wallets,
+  ]);
 
   useEffect(() => {
     const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");
@@ -251,33 +277,57 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    window.ethereum.on("chainChanged", () => window.location.reload());
-    window.ethereum.on("accountsChanged", (accounts: string[]) =>
-      handleAccountChange(accounts)
-    );
+    if (isConnected && walletProvider) {
+      const ethersProvider = new ethers.BrowserProvider(walletProvider);
 
-    return () => {
-      window.ethereum.off("chainChanged", () => window.location.reload());
-      window.ethereum.off("accountsChanged", (accounts: string[]) =>
-        handleAccountChange(accounts)
-      );
-    };
-  }, [handleAccountChange]);
+      setCurrentProvider(ethersProvider);
+    }
+  }, [isConnected, walletProvider]);
 
   useEffect(() => {
     getChainId();
   }, [getChainId]);
 
+  useEffect(() => {
+    if (currentAccount) {
+      getAccountBalance(currentAccount);
+    }
+  }, [currentAccount, getAccountBalance]);
+
+  useEffect(() => {
+    if (walletInfo && walletProvider && address) {
+      setCurrentAccount(address);
+      setCurrentWallet({
+        info: walletInfo as any,
+        provider: walletProvider as EIP1193Provider,
+      });
+    } else {
+      setCurrentWallet(
+        selectedWalletRdns === null ? null : wallets[selectedWalletRdns]
+      );
+      setCurrentAccount(
+        selectedWalletRdns === null
+          ? null
+          : selectedAccountByWalletRdns[selectedWalletRdns]
+      );
+    }
+  }, [
+    address,
+    selectedAccountByWalletRdns,
+    selectedWalletRdns,
+    walletInfo,
+    walletProvider,
+    wallets,
+  ]);
+
   const contextValue: WalletProviderContext = {
     wallets,
-    selectedWallet:
-      selectedWalletRdns === null ? null : wallets[selectedWalletRdns],
-    selectedAccount:
-      selectedWalletRdns === null
-        ? null
-        : selectedAccountByWalletRdns[selectedWalletRdns],
+    selectedWallet: currentWallet,
+    selectedAccount: currentAccount,
     chainId: selectedChain,
     globalLoading: loading,
+    currentProvider,
+    currentBalance,
     triggerLoading,
     errorMessage,
     connectWallet,

@@ -19,43 +19,18 @@ export const SelectedWallet = () => {
     selectedWallet,
     selectedAccount,
     disconnectWallet,
-    getAccountBalance,
     chainId,
-    processErrorMessage,
+    currentBalance,
   } = useWalletProvider();
 
-  const getBalanceData = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (!selectedWallet?.provider) return;
-      const balance = await getAccountBalance(
-        selectedWallet?.provider,
-        selectedAccount as string
-      );
-
-      const chain = chainData.find(
-        (item) => BigInt(item.chainId) === BigInt(chainId)
-      );
-
-      setAccountBalance(balance);
-      setCurrentChain(chain);
-    } catch (error) {
-      console.error(error);
-      processErrorMessage(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    chainId,
-    getAccountBalance,
-    processErrorMessage,
-    selectedAccount,
-    selectedWallet?.provider,
-  ]);
-
   useEffect(() => {
-    getBalanceData();
-  }, [getBalanceData, selectedAccount, selectedWallet?.provider]);
+    const chain = chainData.find(
+      (item) => BigInt(item.chainId) === BigInt(chainId)
+    );
+
+    setAccountBalance(currentBalance);
+    setCurrentChain(chain);
+  }, [chainId, currentBalance, selectedAccount]);
 
   return (
     <Flex vertical justify="center" align="center" gap={16}>
@@ -68,15 +43,9 @@ export const SelectedWallet = () => {
           }
           title={<div>{selectedWallet?.info.name}</div>}
           loading={loading}
+          style={{ minWidth: "300px" }}
         >
           <Meta
-            avatar={
-              <Image
-                src={selectedWallet?.info.icon}
-                alt={selectedWallet?.info.name}
-                preview={false}
-              />
-            }
             title={formatAddress(selectedAccount)}
             description={
               <Space>

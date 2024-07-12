@@ -4,13 +4,9 @@ import React, { useCallback } from "react";
 import { IChainData } from "../interfaces";
 import { chainData } from "../constants";
 import { useForm } from "antd/es/form/Form";
-import { useWalletProvider } from "../hooks";
 
 interface ChainListProps extends Omit<ModalProps, "onCancel" | "onOk"> {
-  onSwitchChain: (
-    provider: EIP1193Provider,
-    chain: IChainData
-  ) => Promise<void>;
+  onSwitchChain: (chain: IChainData) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -20,7 +16,6 @@ export const ChainList = ({
   ...props
 }: ChainListProps) => {
   const [form] = useForm();
-  const { selectedWallet } = useWalletProvider();
 
   const handleFinish = useCallback(async () => {
     const values = await form?.validateFields();
@@ -33,9 +28,9 @@ export const ChainList = ({
       return;
     }
 
-    onSwitchChain(selectedWallet?.provider as EIP1193Provider, chain);
+    onSwitchChain(chain);
     onCancel?.();
-  }, [form, onCancel, onSwitchChain, selectedWallet?.provider]);
+  }, [form, onCancel, onSwitchChain]);
 
   return (
     <Modal {...props} onCancel={onCancel} onOk={handleFinish}>

@@ -1,18 +1,19 @@
 "use client";
 
-import { Button, Flex, Image, Space, Spin, Typography } from "antd";
+import { Button, Divider, Flex, Image, Space, Spin, Typography } from "antd";
 
+import { WalletConnectButton } from "./WalletConnectButton";
 import { useWalletProvider } from "../hooks";
 
 export const WalletList = () => {
   const { wallets, connectWallet, selectedWallet } = useWalletProvider();
 
   return (
-    <>
+    <Flex align="center" justify="center" style={{ height: "90vh" }}>
       {!selectedWallet && (
         <Flex vertical gap={16} justify="center" align="center">
           <h2>Wallets Detected:</h2>
-          <Flex vertical>
+          <Flex vertical gap={10}>
             {Object.keys(wallets).length > 0 ? (
               Object.values(wallets).map((provider: EIP6963ProviderDetail) => (
                 <Button
@@ -23,14 +24,13 @@ export const WalletList = () => {
                       src={provider.info.icon}
                       alt={provider.info.name}
                       preview={false}
+                      style={{ maxWidth: "2rem" }}
                     />
                   }
                   size="large"
-                  type="primary"
+                  shape="round"
                 >
-                  <Typography.Text style={{ color: "white" }}>
-                    {provider.info.name}
-                  </Typography.Text>
+                  {provider.info.name}
                 </Button>
               ))
             ) : (
@@ -42,8 +42,10 @@ export const WalletList = () => {
               </Space>
             )}
           </Flex>
+          <Divider>Or</Divider>
+          <WalletConnectButton />
         </Flex>
       )}
-    </>
+    </Flex>
   );
 };

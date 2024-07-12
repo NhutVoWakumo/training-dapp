@@ -6,20 +6,19 @@ import { Button } from "antd";
 import { ChainList } from "./ChainList";
 import { IChainData } from "../interfaces";
 import { formatChainAsHex } from "../utils";
-import { toBeHex } from "ethers";
 import { useWalletProvider } from "../hooks";
 
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
     useState<boolean>(false);
-  const { selectedWallet, triggerLoading, globalLoading, processErrorMessage } =
+  const { triggerLoading, globalLoading, processErrorMessage, selectedWallet } =
     useWalletProvider();
 
   const switchChain = useCallback(
-    async (provider: EIP1193Provider, chain: IChainData) => {
+    async (chain: IChainData) => {
       triggerLoading(true);
       try {
-        await provider.request({
+        await selectedWallet?.provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
@@ -29,7 +28,7 @@ export const SwitchChain = () => {
         // This error code indicates that the chain has not been added to MetaMask.
         if (Number(error.code) === 4902) {
           try {
-            await provider.request({
+            await selectedWallet?.provider.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
