@@ -62,7 +62,7 @@ export const SwitchChain = () => {
         <>
           <Button
             onClick={() => setOpenSelectChainModal(true)}
-            loading={globalLoading}
+            disabled={globalLoading}
           >
             Switch Chain
           </Button>

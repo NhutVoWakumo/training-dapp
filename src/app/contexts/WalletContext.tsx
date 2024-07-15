@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { capitalizeFirstLetter, formatRoundEther } from "../utils";
 import {
   useDisconnect,
   useWalletInfo,
@@ -16,7 +17,6 @@ import {
 } from "@web3modal/ethers/react";
 
 import { MESSAGE_DURATION } from "../constants";
-import { formatRoundEther } from "../utils";
 import { message } from "antd";
 
 interface WalletProviderContext {
@@ -84,9 +84,13 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const processErrorMessage = useCallback((error: any) => {
     const walletError: WalletError = error as WalletError;
-    setErrorMessage(`${walletError.message}`);
+    const curentMessage = walletError.shortMessage ?? walletError.message;
+
+    if (!curentMessage) return;
+
+    setErrorMessage(`${curentMessage}`);
     message.open({
-      content: `${walletError.message}`,
+      content: `${capitalizeFirstLetter(curentMessage)}`,
       duration: MESSAGE_DURATION,
     });
   }, []);
@@ -147,11 +151,11 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const disconnectWallet = useCallback(async () => {
     try {
-      await disconnect();
       await walletProvider?.request({
         method: "wallet_revokePermissions",
         params: [{ eth_accounts: {} }],
       });
+      await disconnect();
       resetApp();
     } catch (error) {
       console.error("Failed to disconnect:", error);

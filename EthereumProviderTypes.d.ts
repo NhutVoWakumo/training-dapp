@@ -51,4 +51,5 @@ interface EIP1193Provider {
 interface WalletError {
   code?: string;
   message?: string;
+  shortMessage?: string;
 }

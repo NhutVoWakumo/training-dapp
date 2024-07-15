@@ -5,6 +5,7 @@ export const chainData: IChainData[] = [
     name: "Ethereum Mainnet",
     chain: "ETH",
     icon: "ethereum",
+    networkName: "mainnet",
     rpc: [
       "https://mainnet.infura.io/v3/${INFURA_API_KEY}",
       "wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}",
@@ -66,6 +67,7 @@ export const chainData: IChainData[] = [
   {
     name: "BNB Smart Chain Mainnet",
     chain: "BSC",
+    networkName: "bnb",
     rpc: [
       "https://bsc-dataseed1.bnbchain.org",
       "https://bsc-dataseed2.bnbchain.org",
@@ -111,6 +113,7 @@ export const chainData: IChainData[] = [
   {
     name: "BNB Smart Chain Testnet",
     chain: "BSC",
+    networkName: "bnbt",
     rpc: [
       "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
       "https://data-seed-prebsc-2-s1.bnbchain.org:8545",
@@ -144,6 +147,7 @@ export const chainData: IChainData[] = [
     name: "Sepolia",
     title: "Ethereum Testnet Sepolia",
     chain: "ETH",
+    networkName: "sepolia",
     rpc: [
       "https://rpc.sepolia.org",
       "https://rpc2.sepolia.org",

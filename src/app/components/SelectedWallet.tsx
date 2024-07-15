@@ -34,7 +34,12 @@ export const SelectedWallet = () => {
       {selectedAccount && (
         <Card
           extra={
-            <Button type="text" danger onClick={disconnectWallet}>
+            <Button
+              type="text"
+              danger
+              onClick={disconnectWallet}
+              disabled={loading}
+            >
               Disconnect
             </Button>
           }

@@ -37,9 +37,13 @@ export const truncateText = (text: string, maxLength: number) => {
   return text.slice(0, maxLength) + "...";
 };
 
-export function formatRoundEther(wei: BigNumberish): string {
+export const formatRoundEther = (wei: BigNumberish): string => {
   let ether = formatEther(wei);
   ether = (+ether).toFixed(4);
 
   return ether;
-}
+};
+
+export const capitalizeFirstLetter = (string: string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};

@@ -1,33 +1,16 @@
 "use client";
 
-import {
-  Avatar,
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  List,
-  Modal,
-  Spin,
-  message,
-} from "antd";
+import { Avatar, Button, List, Spin, message } from "antd";
 import { ERC20ABI, sepoliaChainId, sepoliaERC20Tokens } from "../constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ethers, formatUnits, getAddress, parseUnits } from "ethers";
 
-import { JsonRpcError } from "ethers";
+import { ITokenData } from "../interfaces";
 import { TransactionResponse } from "ethers";
+import { TransferModal } from "./TransferModal";
 import { formatAddress } from "../utils";
 import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
-
-interface ITokenData {
-  symbol: string;
-  balance: string;
-  decimals: string;
-  address: string;
-  contract: ethers.Contract;
-}
 
 export const TokenList = () => {
   const [form] = useForm();
@@ -42,6 +25,8 @@ export const TokenList = () => {
     triggerLoading,
     processErrorMessage,
     globalLoading,
+    currentProvider,
+    getAccountBalance,
   } = useWalletProvider();
 
   const infuraProvider = useMemo(() => {
@@ -50,13 +35,6 @@ export const TokenList = () => {
       process.env.NEXT_PUBLIC_INFURA_API_KEY
     );
   }, []);
-
-  const defaultProvider = useMemo(() => {
-    if (selectedWallet?.provider)
-      return new ethers.BrowserProvider(selectedWallet?.provider);
-
-    return undefined;
-  }, [selectedWallet?.provider]);
 
   const ethersScript = useCallback(
     async (
@@ -85,6 +63,31 @@ export const TokenList = () => {
       }
     },
     [processErrorMessage]
+  );
+
+  const refetchBalance = useCallback(
+    async (token: ITokenData) => {
+      let currentTokenList = tokenList;
+      const currentUpdatedIndex = tokenList.findIndex(
+        (item) => item.address === token.address
+      );
+      try {
+        const newTokenBalance = await token.contract.balanceOf(selectedAccount);
+
+        currentTokenList[currentUpdatedIndex].balance = formatUnits(
+          newTokenBalance,
+          BigInt(token.decimals)
+        );
+
+        setTokenList(currentTokenList);
+
+        await getAccountBalance(selectedAccount as string);
+      } catch (error) {
+        console.error(error);
+        processErrorMessage(error);
+      }
+    },
+    [getAccountBalance, processErrorMessage, selectedAccount, tokenList]
   );
 
   const addTokenToWallet = useCallback(
@@ -119,8 +122,9 @@ export const TokenList = () => {
       triggerLoading(true);
       try {
         const values = await form?.validateFields();
+        setOpenModal(false);
         const { address, value } = values;
-        const signer = await defaultProvider?.getSigner();
+        const signer = await currentProvider?.getSigner();
         const contract = new ethers.Contract(token.address, ERC20ABI, signer);
         const transactionResponse = (await contract.transfer(
           address,
@@ -136,17 +140,28 @@ export const TokenList = () => {
         );
         console.log(receipt);
         message.success("Transaction completed");
+        await refetchBalance(token);
       } catch (error) {
         processErrorMessage(error);
       } finally {
         triggerLoading(false);
       }
     },
-    [defaultProvider, form, processErrorMessage, triggerLoading]
+    [currentProvider, form, processErrorMessage, refetchBalance, triggerLoading]
   );
+
+  const onOk = useCallback(async () => {
+    try {
+      await form?.validateFields();
+      await transferToken(currentToken);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [currentToken, form, transferToken]);
 
   useEffect(() => {
     if (!selectedAccount) return;
+
     setTokenList([]);
     setLocalLoading(true);
     sepoliaERC20Tokens.forEach((item) => {
@@ -174,9 +189,9 @@ export const TokenList = () => {
                     <Button
                       key={"add-token"}
                       onClick={() => addTokenToWallet(item)}
-                      loading={globalLoading}
+                      disabled={globalLoading}
                     >
-                      Add token to wallet
+                      Import {item.symbol}
                     </Button>,
                     <Button
                       key={"transfer-token"}
@@ -184,7 +199,7 @@ export const TokenList = () => {
                         setCurrentToken(item);
                         setOpenModal(true);
                       }}
-                      loading={globalLoading}
+                      disabled={globalLoading}
                     >
                       Transfer
                     </Button>,
@@ -199,24 +214,17 @@ export const TokenList = () => {
               </Spin>
             )}
           />
-          <Modal
+          <TransferModal
             open={openModal}
             onCancel={() => setOpenModal(false)}
-            onOk={() => transferToken(currentToken)}
-          >
-            <Form form={form} layout="vertical">
-              <Form.Item label={"Address"} name={"address"}>
-                <Input />
-              </Form.Item>
-              <Form.Item label={"Value"} name={"value"}>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  stringMode
-                  controls={false}
-                />
-              </Form.Item>
-            </Form>
-          </Modal>
+            onOk={onOk}
+            globalLoading={globalLoading}
+            form={form}
+            currentBalance={
+              tokenList.find((item) => item.address === currentToken?.address)
+                ?.balance
+            }
+          />
         </div>
       )}
     </>

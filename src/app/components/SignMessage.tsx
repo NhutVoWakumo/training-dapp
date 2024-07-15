@@ -47,7 +47,7 @@ export const SignMessage = () => {
       {selectedWallet && (
         <Button
           onClick={() => signMessage("This is a hello message")}
-          loading={globalLoading}
+          disabled={globalLoading}
         >
           Sign hello message
         </Button>

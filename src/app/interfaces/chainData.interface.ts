@@ -26,4 +26,5 @@ export interface IChainData {
   networkId: number;
   slip44: number;
   explorers?: ChainExplorer[];
+  networkName: string;
 }
