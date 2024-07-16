@@ -14,7 +14,7 @@ import { useWalletProvider } from "../hooks";
 
 export const TokenList = () => {
   const [form] = useForm();
-  const [tokenList, setTokenList] = useState<ITokenData[]>([]);
+  const [tokenList, setTokenList] = useState<Record<string, ITokenData>>({});
   const [currentToken, setCurrentToken] = useState<ITokenData>();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [localLoading, setLocalLoading] = useState<boolean>(false);
@@ -26,7 +26,7 @@ export const TokenList = () => {
     processErrorMessage,
     globalLoading,
     currentProvider,
-    getAccountBalance,
+    getNativeCoinBalance,
   } = useWalletProvider();
 
   const infuraProvider = useMemo(() => {
@@ -36,7 +36,7 @@ export const TokenList = () => {
     );
   }, []);
 
-  const ethersScript = useCallback(
+  const getTokenMetadata = useCallback(
     async (
       erc20: ethers.Contract,
       accountAddress: string,
@@ -47,16 +47,16 @@ export const TokenList = () => {
         const symbol = await erc20.symbol();
         const decimals = await erc20.decimals();
 
-        setTokenList((prevList) => [
+        setTokenList((prevList) => ({
           ...prevList,
-          {
+          [tokenAddress]: {
             balance: formatUnits(balanceOf, decimals),
             symbol: symbol as string,
             address: tokenAddress as string,
             decimals: Number(decimals).toString(),
             contract: erc20,
           },
-        ]);
+        }));
       } catch (error) {
         console.error(error);
         processErrorMessage(error);
@@ -65,32 +65,40 @@ export const TokenList = () => {
     [processErrorMessage]
   );
 
-  const refetchBalance = useCallback(
+  const refetchTokenBalance = useCallback(
     async (token: ITokenData) => {
-      let currentTokenList = tokenList;
-      const currentUpdatedIndex = tokenList.findIndex(
-        (item) => item.address === token.address
-      );
       try {
         const newTokenBalance = await token.contract.balanceOf(selectedAccount);
 
-        currentTokenList[currentUpdatedIndex].balance = formatUnits(
-          newTokenBalance,
-          BigInt(token.decimals)
-        );
-
-        setTokenList(currentTokenList);
-
-        await getAccountBalance(selectedAccount as string);
+        setTokenList((prevTokenList) => ({
+          ...prevTokenList,
+          [token.address]: {
+            ...prevTokenList[token.address],
+            balance: formatUnits(newTokenBalance, BigInt(token.decimals)),
+          },
+        }));
       } catch (error) {
         console.error(error);
         processErrorMessage(error);
       }
     },
-    [getAccountBalance, processErrorMessage, selectedAccount, tokenList]
+    [processErrorMessage, selectedAccount]
   );
 
-  const addTokenToWallet = useCallback(
+  const refetchAccountBalance = useCallback(
+    async (accountAddress: string, token: ITokenData) => {
+      try {
+        await refetchTokenBalance(token);
+        await getNativeCoinBalance(accountAddress);
+      } catch (error) {
+        console.error(error);
+        processErrorMessage(error);
+      }
+    },
+    [getNativeCoinBalance, processErrorMessage, refetchTokenBalance]
+  );
+
+  const importTokenToWallet = useCallback(
     async (token: ITokenData) => {
       triggerLoading(true);
       try {
@@ -117,7 +125,7 @@ export const TokenList = () => {
 
   const transferToken = useCallback(
     async (token?: ITokenData) => {
-      if (!token) return;
+      if (!token || !selectedAccount) return;
 
       triggerLoading(true);
       try {
@@ -126,28 +134,34 @@ export const TokenList = () => {
         const { address, value } = values;
         const signer = await currentProvider?.getSigner();
         const contract = new ethers.Contract(token.address, ERC20ABI, signer);
+
         const transactionResponse = (await contract.transfer(
           address,
           parseUnits(value, Number(token.decimals))
         )) as TransactionResponse;
-        console.log(transactionResponse);
-        const provider = new ethers.EtherscanProvider(
-          "sepolia",
-          process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
-        );
-        const receipt = await provider.waitForTransaction(
+
+        const receipt = await infuraProvider.waitForTransaction(
           transactionResponse.hash
         );
+
         console.log(receipt);
         message.success("Transaction completed");
-        await refetchBalance(token);
+        await refetchAccountBalance(selectedAccount, token);
       } catch (error) {
         processErrorMessage(error);
       } finally {
         triggerLoading(false);
       }
     },
-    [currentProvider, form, processErrorMessage, refetchBalance, triggerLoading]
+    [
+      currentProvider,
+      form,
+      infuraProvider,
+      processErrorMessage,
+      refetchAccountBalance,
+      selectedAccount,
+      triggerLoading,
+    ]
   );
 
   const onOk = useCallback(async () => {
@@ -162,24 +176,24 @@ export const TokenList = () => {
   useEffect(() => {
     if (!selectedAccount) return;
 
-    setTokenList([]);
+    setTokenList({});
     setLocalLoading(true);
     sepoliaERC20Tokens.forEach((item) => {
       const tokenAddress = getAddress(item.address);
       const accountAddress = getAddress(selectedAccount);
       const erc20 = new ethers.Contract(tokenAddress, ERC20ABI, infuraProvider);
 
-      ethersScript(erc20, accountAddress, tokenAddress);
+      getTokenMetadata(erc20, accountAddress, tokenAddress);
     });
     setLocalLoading(false);
-  }, [ethersScript, infuraProvider, selectedAccount]);
+  }, [getTokenMetadata, infuraProvider, selectedAccount]);
 
   return (
     <>
       {chainId.toString() === sepoliaChainId && selectedAccount && (
         <div>
           <List
-            dataSource={tokenList}
+            dataSource={Object.values(tokenList)}
             itemLayout="vertical"
             loading={localLoading}
             renderItem={(item) => (
@@ -188,7 +202,7 @@ export const TokenList = () => {
                   actions={[
                     <Button
                       key={"add-token"}
-                      onClick={() => addTokenToWallet(item)}
+                      onClick={() => importTokenToWallet(item)}
                       disabled={globalLoading}
                     >
                       Import {item.symbol}
@@ -221,8 +235,9 @@ export const TokenList = () => {
             globalLoading={globalLoading}
             form={form}
             currentBalance={
-              tokenList.find((item) => item.address === currentToken?.address)
-                ?.balance
+              Object.values(tokenList).find(
+                (item) => item.address === currentToken?.address
+              )?.balance
             }
           />
         </div>

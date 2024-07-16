@@ -20,7 +20,7 @@ export const SwitchChain = () => {
 
       triggerLoading(true);
       try {
-        await selectedWallet?.provider.request({
+        await selectedWallet.provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
@@ -28,7 +28,7 @@ export const SwitchChain = () => {
         const error = switchError as WalletError;
         if (Number(error.code) === 4902) {
           try {
-            await selectedWallet?.provider.request({
+            await selectedWallet.provider.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
@@ -40,12 +40,10 @@ export const SwitchChain = () => {
               ],
             });
           } catch (addError) {
-            // Handle "add" error.
             console.error(addError);
             processErrorMessage(addError);
           }
         } else {
-          // Handle other "switch" errors.
           console.error(switchError);
           processErrorMessage(switchError);
         }

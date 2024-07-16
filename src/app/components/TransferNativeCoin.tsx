@@ -10,7 +10,7 @@ import { formatValueToHexWei } from "../utils";
 import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
 
-export const Transfer = () => {
+export const TransferNativeCoin = () => {
   const [form] = useForm();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const {
@@ -21,7 +21,7 @@ export const Transfer = () => {
     globalLoading,
     processErrorMessage,
     currentBalance,
-    getAccountBalance,
+    getNativeCoinBalance,
   } = useWalletProvider();
 
   const handleTransfer = useCallback(async () => {
@@ -42,7 +42,6 @@ export const Transfer = () => {
           },
         ],
       })) as string;
-      console.log(transactionHash);
 
       const currentNetworkName = chainData.find(
         (item) => item.chainId.toString() === chainId
@@ -61,7 +60,7 @@ export const Transfer = () => {
         }
       }
 
-      await getAccountBalance(selectedAccount);
+      await getNativeCoinBalance(selectedAccount);
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
@@ -74,7 +73,7 @@ export const Transfer = () => {
     triggerLoading,
     form,
     chainId,
-    getAccountBalance,
+    getNativeCoinBalance,
     processErrorMessage,
   ]);
 

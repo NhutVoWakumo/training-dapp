@@ -32,7 +32,7 @@ interface WalletProviderContext {
   triggerLoading: (loading: boolean) => void;
   clearError: () => void;
   processErrorMessage: (error: any) => void;
-  getAccountBalance: (address: string) => Promise<string>;
+  getNativeCoinBalance: (address: string) => Promise<string>;
   getChainId: () => Promise<string>;
 }
 
@@ -55,7 +55,7 @@ const initialValue: WalletProviderContext = {
   triggerLoading: (loading: boolean) => {},
   clearError: () => {},
   processErrorMessage: (error: any) => {},
-  getAccountBalance: async (address: string) => {
+  getNativeCoinBalance: async (address: string) => {
     return "";
   },
   getChainId: async () => "",
@@ -116,7 +116,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   }, [processErrorMessage, walletProvider]);
 
-  const getAccountBalance = useCallback(
+  const getNativeCoinBalance = useCallback(
     async (address: string) => {
       setLoading(true);
       try {
@@ -177,9 +177,9 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     if (currentAccount) {
-      getAccountBalance(currentAccount);
+      getNativeCoinBalance(currentAccount);
     }
-  }, [currentAccount, getAccountBalance, chainId]);
+  }, [currentAccount, chainId, getNativeCoinBalance]);
 
   useEffect(() => {
     if (walletInfo && walletProvider && address) {
@@ -207,7 +207,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     disconnectWallet,
     clearError,
     processErrorMessage,
-    getAccountBalance,
+    getNativeCoinBalance,
     getChainId,
   };
 

@@ -3,7 +3,7 @@ import {
   SignMessage,
   SwitchChain,
   TokenList,
-  Transfer,
+  TransferNativeCoin,
   WalletList,
 } from "./components";
 
@@ -21,7 +21,7 @@ export default function Home() {
           <SelectedWallet />
           <Space>
             <SwitchChain />
-            <Transfer />
+            <TransferNativeCoin />
             <SignMessage />
           </Space>
           <TokenList />

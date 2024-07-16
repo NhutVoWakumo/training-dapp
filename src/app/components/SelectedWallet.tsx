@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, Button, Card, Flex, Image, Space } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { Avatar, Button, Card, Flex, Space } from "antd";
+import { useEffect, useState } from "react";
 
 import { IChainData } from "../interfaces";
 import { chainData } from "../constants";
@@ -19,6 +19,7 @@ export const SelectedWallet = () => {
     disconnectWallet,
     chainId,
     currentBalance,
+    globalLoading,
   } = useWalletProvider();
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export const SelectedWallet = () => {
               type="text"
               danger
               onClick={disconnectWallet}
-              disabled={loading}
+              disabled={globalLoading}
             >
               Disconnect
             </Button>
