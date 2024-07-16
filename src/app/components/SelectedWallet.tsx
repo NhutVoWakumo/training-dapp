@@ -11,8 +11,6 @@ import { useWalletProvider } from "../hooks";
 const { Meta } = Card;
 
 export const SelectedWallet = () => {
-  const [accountBalance, setAccountBalance] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
   const [currentChain, setCurrentChain] = useState<IChainData>();
 
   const {
@@ -28,9 +26,8 @@ export const SelectedWallet = () => {
       (item) => BigInt(item.chainId) === BigInt(chainId)
     );
 
-    setAccountBalance(currentBalance);
     setCurrentChain(chain);
-  }, [chainId, currentBalance, selectedAccount]);
+  }, [chainId]);
 
   return (
     <Flex vertical justify="center" align="center" gap={16}>
@@ -42,7 +39,6 @@ export const SelectedWallet = () => {
             </Button>
           }
           title={<div>{selectedWallet?.info.name}</div>}
-          loading={loading}
           style={{ minWidth: "300px" }}
         >
           <Meta
@@ -50,7 +46,7 @@ export const SelectedWallet = () => {
             description={
               <Space>
                 <Avatar>{currentChain?.nativeCurrency?.symbol ?? "?"}</Avatar>
-                <div>{`${accountBalance} ${currentChain?.nativeCurrency.name}`}</div>
+                <div>{`${currentBalance} ${currentChain?.nativeCurrency.name}`}</div>
               </Space>
             }
           />
