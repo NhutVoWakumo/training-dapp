@@ -36,7 +36,7 @@ export const TokenList = () => {
   const infuraProvider = useMemo(() => {
     return new ethers.InfuraProvider(
       currentInfuraChainName,
-      process.env.NEXT_PUBLIC_INFURA_API_KEY
+      process.env.NEXT_PUBLIC_INFURA_API_KEY,
     );
   }, [currentInfuraChainName]);
 
@@ -61,7 +61,7 @@ export const TokenList = () => {
               contract: new Contract(
                 token.token_address,
                 ERC20ABI,
-                infuraProvider
+                infuraProvider,
               ),
               logoUrl: token.logo ?? "",
             },
@@ -74,7 +74,7 @@ export const TokenList = () => {
         setLocalLoading(false);
       }
     },
-    [chainId, infuraProvider, processErrorMessage]
+    [chainId, infuraProvider, processErrorMessage],
   );
 
   useEffect(() => {
@@ -104,7 +104,7 @@ export const TokenList = () => {
         processErrorMessage(error);
       }
     },
-    [processErrorMessage, selectedAccount]
+    [processErrorMessage, selectedAccount],
   );
 
   const refetchAccountBalance = useCallback(
@@ -117,7 +117,7 @@ export const TokenList = () => {
         processErrorMessage(error);
       }
     },
-    [getNativeCoinBalance, processErrorMessage, refetchTokenBalance]
+    [getNativeCoinBalance, processErrorMessage, refetchTokenBalance],
   );
 
   const importTokenToWallet = useCallback(
@@ -142,7 +142,7 @@ export const TokenList = () => {
         triggerLoading(false);
       }
     },
-    [processErrorMessage, selectedWallet?.provider, triggerLoading]
+    [processErrorMessage, selectedWallet?.provider, triggerLoading],
   );
 
   const transferToken = useCallback(
@@ -159,11 +159,11 @@ export const TokenList = () => {
 
         const transactionResponse = (await contract.transfer(
           address,
-          parseUnits(value, Number(token.decimals))
+          parseUnits(value, Number(token.decimals)),
         )) as TransactionResponse;
 
         const receipt = await infuraProvider.waitForTransaction(
-          transactionResponse.hash
+          transactionResponse.hash,
         );
 
         console.log(receipt);
@@ -183,7 +183,7 @@ export const TokenList = () => {
       refetchAccountBalance,
       selectedAccount,
       triggerLoading,
-    ]
+    ],
   );
 
   const onOk = useCallback(async () => {
@@ -249,7 +249,7 @@ export const TokenList = () => {
             form={form}
             currentBalance={
               Object.values(tokenList).find(
-                (item) => item.address === currentToken?.address
+                (item) => item.address === currentToken?.address,
               )?.balance
             }
           />
