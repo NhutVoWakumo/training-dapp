@@ -39,7 +39,7 @@ export const NFTList = () => {
   );
 
   const getNFTList = useCallback(async () => {
-    if (!selectedAccount || localLoading || !canLoadMore) return;
+    if (!selectedAccount) return;
 
     setLocalLoading(true);
     try {
@@ -53,7 +53,7 @@ export const NFTList = () => {
         address: selectedAccount,
       });
 
-      if (!raw.cursor) setCanLoadMore(false);
+      setCanLoadMore(!!raw.cursor);
 
       setCurrentCursor(raw.cursor);
 
@@ -79,19 +79,14 @@ export const NFTList = () => {
     } finally {
       setLocalLoading(false);
     }
-  }, [
-    canLoadMore,
-    chainId,
-    currentCursor,
-    localLoading,
-    parseNFTMetadata,
-    selectedAccount,
-  ]);
+  }, [chainId, currentCursor, parseNFTMetadata, selectedAccount]);
 
   useEffect(() => {
     setNFTList([]);
+    setCurrentCursor(undefined);
+    setCanLoadMore(true);
     getNFTList();
-  }, []);
+  }, [chainId]);
 
   return (
     <div
