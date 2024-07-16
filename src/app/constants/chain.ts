@@ -187,4 +187,26 @@ export const chainData: IChainData[] = [
       },
     ],
   },
+  {
+    name: "Polygon Amoy",
+    title: "Polygon Testnet Amoy",
+    chain: "Polygon",
+    rpc: [
+      "wss://polygon-amoy-bor-rpc.publicnode.com",
+      "wss://polygon-amoy-bor-rpc.publicnode.com	",
+    ],
+    faucets: [],
+    nativeCurrency: {
+      name: "MATIC",
+      symbol: "MATIC",
+      decimals: 18,
+    },
+    infoURL: "<https://polygon.technology/>",
+    shortName: "maticmum",
+    chainId: 80002,
+    networkId: 80002,
+    slip44: 1,
+    explorers: [],
+    networkName: "matic-amoy",
+  },
 ];

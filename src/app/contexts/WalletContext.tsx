@@ -17,6 +17,7 @@ import {
 } from "@web3modal/ethers/react";
 
 import { MESSAGE_DURATION } from "../constants";
+import Moralis from "moralis";
 import { message } from "antd";
 
 interface WalletProviderContext {
@@ -194,6 +195,12 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (!isConnected) resetApp();
   }, [isConnected, resetApp]);
+
+  useEffect(() => {
+    Moralis.start({
+      apiKey: process.env.NEXT_PUBLIC_MORALIS_KEY,
+    });
+  }, []);
 
   const contextValue: WalletProviderContext = {
     selectedWallet: currentWallet,

@@ -1,14 +1,16 @@
 "use client";
 
 import { Avatar, Button, List, Spin, message } from "antd";
-import { ERC20ABI, sepoliaChainId, sepoliaERC20Tokens } from "../constants";
+import { ERC20ABI, chainData } from "../constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ethers, formatUnits, getAddress, parseUnits } from "ethers";
+import { ethers, formatUnits, parseUnits } from "ethers";
+import { formatAddress, formatChainAsHex } from "../utils";
 
+import { Contract } from "ethers";
 import { ITokenData } from "../interfaces";
+import Moralis from "moralis";
 import { TransactionResponse } from "ethers";
 import { TransferModal } from "./TransferModal";
-import { formatAddress } from "../utils";
 import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
 
@@ -18,6 +20,8 @@ export const TokenList = () => {
   const [currentToken, setCurrentToken] = useState<ITokenData>();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [localLoading, setLocalLoading] = useState<boolean>(false);
+  const [currentInfuraChainName, setCurrentInfuraChainName] =
+    useState<string>();
   const {
     selectedWallet,
     chainId,
@@ -31,39 +35,57 @@ export const TokenList = () => {
 
   const infuraProvider = useMemo(() => {
     return new ethers.InfuraProvider(
-      "sepolia",
+      currentInfuraChainName,
       process.env.NEXT_PUBLIC_INFURA_API_KEY
     );
-  }, []);
+  }, [currentInfuraChainName]);
 
-  const getTokenMetadata = useCallback(
-    async (
-      erc20: ethers.Contract,
-      accountAddress: string,
-      tokenAddress: string
-    ) => {
+  const getTokenList = useCallback(
+    async (accountAddress: string) => {
+      setLocalLoading(true);
+      setTokenList({});
       try {
-        const balanceOf = await erc20.balanceOf(accountAddress);
-        const symbol = await erc20.symbol();
-        const decimals = await erc20.decimals();
+        const { raw } = await Moralis.EvmApi.token.getWalletTokenBalances({
+          chain: formatChainAsHex(Number(chainId)),
+          address: accountAddress,
+        });
 
-        setTokenList((prevList) => ({
-          ...prevList,
-          [tokenAddress]: {
-            balance: formatUnits(balanceOf, decimals),
-            symbol: symbol as string,
-            address: tokenAddress as string,
-            decimals: Number(decimals).toString(),
-            contract: erc20,
-          },
-        }));
+        raw.forEach((token) => {
+          setTokenList((prev) => ({
+            ...prev,
+            [token.token_address]: {
+              balance: formatUnits(token.balance, token.decimals),
+              symbol: token.symbol as string,
+              address: token.token_address as string,
+              decimals: Number(token.decimals).toString(),
+              contract: new Contract(
+                token.token_address,
+                ERC20ABI,
+                infuraProvider
+              ),
+              logoUrl: token.logo ?? "",
+            },
+          }));
+        });
       } catch (error) {
         console.error(error);
         processErrorMessage(error);
+      } finally {
+        setLocalLoading(false);
       }
     },
-    [processErrorMessage]
+    [chainId, infuraProvider, processErrorMessage]
   );
+
+  useEffect(() => {
+    const chain = chainData.find((item) => item.chainId.toString() === chainId);
+
+    if (!chain || !selectedAccount) return;
+
+    setCurrentInfuraChainName(chain.networkName);
+
+    getTokenList(selectedAccount);
+  }, [chainId, getTokenList, selectedAccount]);
 
   const refetchTokenBalance = useCallback(
     async (token: ITokenData) => {
@@ -173,24 +195,9 @@ export const TokenList = () => {
     }
   }, [currentToken, form, transferToken]);
 
-  useEffect(() => {
-    if (!selectedAccount) return;
-
-    setTokenList({});
-    setLocalLoading(true);
-    sepoliaERC20Tokens.forEach((item) => {
-      const tokenAddress = getAddress(item.address);
-      const accountAddress = getAddress(selectedAccount);
-      const erc20 = new ethers.Contract(tokenAddress, ERC20ABI, infuraProvider);
-
-      getTokenMetadata(erc20, accountAddress, tokenAddress);
-    });
-    setLocalLoading(false);
-  }, [getTokenMetadata, infuraProvider, selectedAccount]);
-
   return (
     <>
-      {chainId.toString() === sepoliaChainId && selectedAccount && (
+      {selectedAccount && (
         <div>
           <List
             dataSource={Object.values(tokenList)}
@@ -220,7 +227,13 @@ export const TokenList = () => {
                   ]}
                 >
                   <List.Item.Meta
-                    avatar={<Avatar>{item.symbol}</Avatar>}
+                    avatar={
+                      item.logoUrl ? (
+                        <Avatar src={item.logoUrl} alt={item.symbol} />
+                      ) : (
+                        <Avatar>{item.symbol}</Avatar>
+                      )
+                    }
                     title={formatAddress(item.address)}
                     description={`Balance: ${item.balance}`}
                   />

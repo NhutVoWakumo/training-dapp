@@ -7,6 +7,7 @@ export interface ITokenData {
   decimals: string;
   address: string;
   contract: ethers.Contract;
+  logoUrl: string;
 }
 
 export interface NFTAttribute {
@@ -20,6 +21,8 @@ export interface NFTData extends Record<any, any> {
   attributes: NFTAttribute[];
   image: string;
   address: string;
-  tokenId: number;
+  tokenId: string;
   contract?: Contract;
+  collectionName: string;
+  symbol: string;
 }

@@ -50,8 +50,14 @@ export const capitalizeFirstLetter = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-export const createNFTUrl = (uri: string) => {
-  if (!uri.includes("ipfs://")) return uri;
+export const parseIPFSToNormalUrl = (uri: string) => {
+  if (uri.includes("ipfs://")) return uri.replace("ipfs://", IPFS_PROVIDER_URL);
 
-  return uri.replace("ipfs://", IPFS_PROVIDER_URL);
+  if (uri.includes("/ipfs/")) {
+    const splittedUri = uri.split("/ipfs/");
+
+    return `${IPFS_PROVIDER_URL}${splittedUri.pop()}`;
+  }
+
+  return uri;
 };
