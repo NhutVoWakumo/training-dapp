@@ -1,6 +1,8 @@
 import { BigNumberish, formatEther } from "ethers";
 import { parseUnits, toBeHex } from "ethers";
 
+import { IPFS_PROVIDER_URL } from "../constants";
+
 export const formatBalance = (rawBalance: string) => {
   const balance = (parseInt(rawBalance) / 1000000000000000000).toFixed(2);
   return balance;
@@ -46,4 +48,10 @@ export const formatRoundEther = (wei: BigNumberish): string => {
 
 export const capitalizeFirstLetter = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+export const createNFTUrl = (uri: string) => {
+  if (!uri.includes("ipfs://")) return uri;
+
+  return uri.replace("ipfs://", IPFS_PROVIDER_URL);
 };
