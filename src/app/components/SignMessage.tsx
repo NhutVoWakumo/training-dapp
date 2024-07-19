@@ -39,7 +39,7 @@ export const SignMessage = () => {
       selectedAccount,
       selectedWallet?.provider,
       triggerLoading,
-    ]
+    ],
   );
 
   return (

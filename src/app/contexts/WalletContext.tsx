@@ -323,16 +323,12 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return () => {
       provider.removeAllListeners();
     };
-<<<<<<< HEAD
   }, [
     getChainId,
     disconnectWallet,
     selectedWalletRdns,
     selectedAccountByWalletRdns,
   ]);
-=======
-  }, [getChainId, disconnectWallet]);
->>>>>>> 9ddac27 (feat: support installed metamask extension)
 
   useEffect(() => {
     const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");

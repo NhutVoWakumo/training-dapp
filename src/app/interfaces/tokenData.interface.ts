@@ -25,4 +25,5 @@ export interface NFTData extends Record<any, any> {
   contract?: Contract;
   collectionName: string;
   symbol: string;
+  type: string;
 }

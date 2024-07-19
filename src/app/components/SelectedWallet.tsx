@@ -24,7 +24,7 @@ export const SelectedWallet = () => {
 
   useEffect(() => {
     const chain = chainData.find(
-      (item) => BigInt(item.chainId) === BigInt(chainId)
+      (item) => BigInt(item.chainId) === BigInt(chainId),
     );
 
     setCurrentChain(chain);

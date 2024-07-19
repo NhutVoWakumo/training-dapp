@@ -11,8 +11,14 @@ import { useWalletProvider } from "../hooks";
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
     useState<boolean>(false);
-  const { triggerLoading, globalLoading, processErrorMessage, selectedWallet } =
-    useWalletProvider();
+  const {
+    triggerLoading,
+    globalLoading,
+    processErrorMessage,
+    selectedWallet,
+    getNativeCoinBalance,
+    selectedAccount,
+  } = useWalletProvider();
 
   const switchChain = useCallback(
     async (chain: IChainData) => {
@@ -49,9 +55,16 @@ export const SwitchChain = () => {
         }
       } finally {
         triggerLoading(false);
+        await getNativeCoinBalance(selectedAccount as string);
       }
     },
-    [processErrorMessage, selectedWallet?.provider, triggerLoading]
+    [
+      getNativeCoinBalance,
+      processErrorMessage,
+      selectedAccount,
+      selectedWallet,
+      triggerLoading,
+    ],
   );
 
   return (

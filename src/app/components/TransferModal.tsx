@@ -8,6 +8,7 @@ import {
 } from "antd";
 
 import React from "react";
+import { isAddress } from "ethers";
 
 interface TransferModalProps extends ModalProps {
   form: FormInstance;
@@ -35,6 +36,14 @@ export const TransferModal = ({
               required: true,
               message: "Please input an address",
             },
+            {
+              validator: (_, value) => {
+                if (!isAddress(value))
+                  return Promise.reject(new Error("Invalid address"));
+
+                return Promise.resolve();
+              },
+            },
           ]}
         >
           <Input />
@@ -60,7 +69,7 @@ export const TransferModal = ({
                 }
 
                 return Promise.reject(
-                  new Error(`Value cannot exceed ${currentBalance}`)
+                  new Error(`Value cannot exceed ${currentBalance}`),
                 );
               },
             },

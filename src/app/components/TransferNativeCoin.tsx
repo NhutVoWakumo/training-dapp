@@ -44,13 +44,13 @@ export const TransferNativeCoin = () => {
       })) as string;
 
       const currentNetworkName = chainData.find(
-        (item) => item.chainId.toString() === chainId
+        (item) => item.chainId.toString() === chainId,
       );
       if (currentNetworkName) {
         try {
           const provider = new ethers.EtherscanProvider(
             currentNetworkName.networkName,
-            process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
+            process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY,
           );
           const receipt = await provider.waitForTransaction(transactionHash);
           console.log(receipt);
