@@ -12,7 +12,6 @@ import { useWalletProvider } from "../hooks";
 
 export const NFTList = () => {
   const [nftList, setNFTList] = useState<NFTData[]>([]);
-  const [localLoading, setLocalLoading] = useState<boolean>(false);
   const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
   const [currentCursor, setCurrentCursor] = useState<string>();
 
@@ -24,7 +23,7 @@ export const NFTList = () => {
         if (metadata) return JSON.parse(metadata);
         if (tokenUri) {
           const { data: nftData } = await axios.get(
-            parseIPFSToNormalUrl(tokenUri)
+            parseIPFSToNormalUrl(tokenUri),
           );
 
           return nftData;
@@ -35,13 +34,12 @@ export const NFTList = () => {
         console.error(error);
       }
     },
-    []
+    [],
   );
 
   const getNFTList = useCallback(async () => {
     if (!selectedAccount) return;
 
-    setLocalLoading(true);
     try {
       const { raw } = await Moralis.EvmApi.nft.getWalletNFTs({
         chain: formatChainAsHex(Number(chainId)),
@@ -76,8 +74,6 @@ export const NFTList = () => {
       });
     } catch (error) {
       console.error(error);
-    } finally {
-      setLocalLoading(false);
     }
   }, [chainId, currentCursor, parseNFTMetadata, selectedAccount]);
 
@@ -86,7 +82,7 @@ export const NFTList = () => {
     setCurrentCursor(undefined);
     setCanLoadMore(true);
     getNFTList();
-  }, [chainId]);
+  }, [chainId, selectedAccount]);
 
   return (
     <div
