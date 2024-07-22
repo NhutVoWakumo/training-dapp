@@ -1,8 +1,10 @@
 import "./globals.css";
 
+import { AppContext, Web3Modal } from "./contexts";
+
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
-import { Web3Modal } from "./contexts";
+import { Navbar } from "./components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,9 +19,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark text-foreground bg-background">
       <body>
-        <Web3Modal>{children}</Web3Modal>
+        <AppContext>
+          <Web3Modal>
+            <div>
+              <Navbar />
+              {children}
+            </div>
+          </Web3Modal>
+        </AppContext>
       </body>
     </html>
   );

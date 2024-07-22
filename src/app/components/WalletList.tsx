@@ -2,7 +2,7 @@
 
 import { Button, Divider, Flex, Image, Space, Spin, Typography } from "antd";
 
-import { WalletConnectButton } from "./WalletConnectButton";
+import { WalletConnectButton } from "./Navbar/WalletConnectButton";
 import { useWalletProvider } from "../hooks";
 
 export const WalletList = () => {

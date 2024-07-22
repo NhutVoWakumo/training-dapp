@@ -1,48 +1,21 @@
-import {
-  LoadingWrapper,
-  NFTList,
-  SignMessage,
-  SwitchChain,
-  TokenList,
-  TransferNativeCoin,
-  WalletList,
-} from "./components";
-import { Space, Tabs } from "antd";
-
-import { AppContext } from "./contexts";
-import { SelectedWallet } from "./components/SelectedWallet";
+import { TokenCircle } from "./components";
 
 export default function Home() {
   return (
-    <AppContext>
-      <LoadingWrapper>
-        <main className="flex min-h-screen flex-col items-center gap-10 bg-white p-5">
-          <WalletList />
-          <hr />
-          <SelectedWallet />
-          <Space>
-            <SwitchChain />
-            <TransferNativeCoin />
-            <SignMessage />
-          </Space>
-          <Tabs
-            style={{ minWidth: "15rem" }}
-            centered
-            items={[
-              {
-                key: "Tokens",
-                label: "Tokens",
-                children: <TokenList />,
-              },
-              {
-                key: "NFTs",
-                label: "NFTs",
-                children: <NFTList />,
-              },
-            ]}
-          />
-        </main>
-      </LoadingWrapper>
-    </AppContext>
+    <main className="flex min-h-[90vh] flex-col items-center justify-center gap-10 p-5 overflow-hidden">
+      <div className="relative w-full h-full">
+        <TokenCircle circleRadius={300} clockwise={false} />
+        <div className="absolute w-full h-full top-0">
+          <div className="flex items-center justify-center w-full h-full text-wrap flex-col gap-3">
+            <p className="text-4xl text-white font-semibold bg-gradient-to-r">
+              Connect and explore
+            </p>
+            <p className="text-6xl text-transparent font-semibold text-purple-yellow-gradient animate-gradient">
+              the Web3 world
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
