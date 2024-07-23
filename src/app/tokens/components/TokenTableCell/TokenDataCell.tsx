@@ -27,7 +27,7 @@ export const TokenDataCell = ({ token }: TokenDataCellProps) => {
           color: "warning",
           isBordered: true,
           fallback: (
-            <Jazzicon diameter={100} seed={jsNumberForAddress(token.address)} />
+            <Jazzicon diameter={50} seed={jsNumberForAddress(token.address)} />
           ),
         }}
       >

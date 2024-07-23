@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Link,
   NavbarBrand,
   NavbarContent,
   NavbarItem,
@@ -10,11 +9,12 @@ import {
   NavbarMenuToggle,
   Navbar as NextUINavbar,
 } from "@nextui-org/react";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 
 import { AvatarMenu } from "./AvatarMenu";
 import { ConnectButton } from "./ConnectButton";
 import { GiAlienFire } from "react-icons/gi";
+import Link from "next/link";
 import { navbarItems } from "@/app/constants";
 import { usePathname } from "next/navigation";
 import { useWalletProvider } from "../../hooks";
@@ -55,7 +55,7 @@ export const Navbar = () => {
             <NavbarItem key={`${item.name}-${index}`} className="mx-3">
               <Link
                 color={isActive ? "secondary" : "foreground"}
-                href={item.link}
+                href={`/${item.link}`}
                 className={`text-lg font-medium ${isActive ? "text-secondary" : "text-foreground"}`}
               >
                 {item.name}
@@ -82,7 +82,6 @@ export const Navbar = () => {
                 color={isActive ? "secondary" : "foreground"}
                 className={`w-full ${isActive ? "text-secondary" : "text-foreground"}`}
                 href={item.link}
-                size="lg"
               >
                 {item.name}
               </Link>

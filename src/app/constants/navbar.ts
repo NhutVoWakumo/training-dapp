@@ -5,6 +5,6 @@ export const navbarItems = [
   },
   {
     name: "NFTs",
-    link: "nfts",
+    link: "nft-collections",
   },
 ];

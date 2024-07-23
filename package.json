@@ -15,11 +15,8 @@
   "dependencies": {
     "@ant-design/icons": "^5.3.7",
     "@nextui-org/react": "^2.4.6",
-    "@nextui-org/use-infinite-scroll": "^2.1.5",
-    "@react-stately/data": "^3.11.4",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
-    "@walletconnect/ethereum-provider": "^2.13.3",
     "@walletconnect/web3wallet": "^1.12.3",
     "@web3modal/ethers": "^5.0.6",
     "antd": "^5.18.3",

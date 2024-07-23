@@ -111,7 +111,7 @@ export const TokenTable = () => {
   ]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 my-5">
       <div className="flex justify-between items-center mb-5">
         <p className="text-3xl text-transparent font-semibold bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 bg-clip-text animate-gradient">
           ERC20 Tokens Table
