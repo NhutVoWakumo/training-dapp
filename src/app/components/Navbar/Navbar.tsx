@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Button,
   Link,
   NavbarBrand,
   NavbarContent,
@@ -11,16 +10,26 @@ import {
   NavbarMenuToggle,
   Navbar as NextUINavbar,
 } from "@nextui-org/react";
+import React, { useCallback, useMemo } from "react";
 
 import { AvatarMenu } from "./AvatarMenu";
 import { ConnectButton } from "./ConnectButton";
-import React from "react";
+import { GiAlienFire } from "react-icons/gi";
 import { navbarItems } from "@/app/constants";
+import { usePathname } from "next/navigation";
 import { useWalletProvider } from "../../hooks";
 
 export const Navbar = () => {
   const { selectedWallet, selectedAccount } = useWalletProvider();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const currentPath = usePathname();
+
+  const checkElementActive = useCallback(
+    (link: string) => {
+      return currentPath.includes(link) || currentPath.startsWith(`${link}/`);
+    },
+    [currentPath],
+  );
 
   return (
     <NextUINavbar onMenuOpenChange={setIsMenuOpen}>
@@ -30,22 +39,30 @@ export const Navbar = () => {
           className="sm:hidden"
         />
         <NavbarBrand>
-          <p className="font-bold text-inherit">HEHE</p>
+          <div className="flex gap-3 items-center">
+            <GiAlienFire size={28} />
+            <Link href="/" className="font-bold text-inherit">
+              HEHE
+            </Link>
+          </div>
         </NavbarBrand>
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
-        {navbarItems.map((item, index) => (
-          <NavbarItem key={`${item.name}-${index}`} className="mx-3">
-            <Link
-              color="foreground"
-              href={item.link}
-              className="text-lg font-medium"
-            >
-              {item.name}
-            </Link>
-          </NavbarItem>
-        ))}
+        {navbarItems.map((item, index) => {
+          const isActive = checkElementActive(item.link);
+          return (
+            <NavbarItem key={`${item.name}-${index}`} className="mx-3">
+              <Link
+                color={isActive ? "secondary" : "foreground"}
+                href={item.link}
+                className={`text-lg font-medium ${isActive ? "text-secondary" : "text-foreground"}`}
+              >
+                {item.name}
+              </Link>
+            </NavbarItem>
+          );
+        })}
       </NavbarContent>
       <NavbarContent justify="end">
         {!!selectedWallet && !!selectedAccount ? (
@@ -57,24 +74,21 @@ export const Navbar = () => {
         )}
       </NavbarContent>
       <NavbarMenu>
-        {navbarItems.map((item, index) => (
-          <NavbarMenuItem key={`${item.name}-${index}`}>
-            <Link
-              color={
-                index === 2
-                  ? "primary"
-                  : index === navbarItems.length - 1
-                    ? "danger"
-                    : "foreground"
-              }
-              className="w-full"
-              href={item.link}
-              size="lg"
-            >
-              {item.name}
-            </Link>
-          </NavbarMenuItem>
-        ))}
+        {navbarItems.map((item, index) => {
+          const isActive = checkElementActive(item.link);
+          return (
+            <NavbarMenuItem key={`${item.name}-${index}`}>
+              <Link
+                color={isActive ? "secondary" : "foreground"}
+                className={`w-full ${isActive ? "text-secondary" : "text-foreground"}`}
+                href={item.link}
+                size="lg"
+              >
+                {item.name}
+              </Link>
+            </NavbarMenuItem>
+          );
+        })}
       </NavbarMenu>
     </NextUINavbar>
   );
