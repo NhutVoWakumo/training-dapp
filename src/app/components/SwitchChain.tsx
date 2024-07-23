@@ -6,30 +6,35 @@ import { Button } from "antd";
 import { ChainList } from "./ChainList";
 import { IChainData } from "../interfaces";
 import { formatChainAsHex } from "../utils";
-import { toBeHex } from "ethers";
 import { useWalletProvider } from "../hooks";
 
 export const SwitchChain = () => {
   const [openSelectChainModal, setOpenSelectChainModal] =
     useState<boolean>(false);
-  const { selectedWallet, triggerLoading, globalLoading, processErrorMessage } =
-    useWalletProvider();
+  const {
+    triggerLoading,
+    globalLoading,
+    processErrorMessage,
+    selectedWallet,
+    getNativeCoinBalance,
+    selectedAccount,
+  } = useWalletProvider();
 
   const switchChain = useCallback(
-    async (provider: EIP1193Provider, chain: IChainData) => {
+    async (chain: IChainData) => {
+      if (!selectedWallet?.provider) return;
+
       triggerLoading(true);
       try {
-        await provider.request({
+        await selectedWallet.provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
-        window.location.reload();
       } catch (switchError) {
         const error = switchError as WalletError;
-        // This error code indicates that the chain has not been added to MetaMask.
         if (Number(error.code) === 4902) {
           try {
-            await provider.request({
+            await selectedWallet.provider.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
@@ -40,22 +45,26 @@ export const SwitchChain = () => {
                 },
               ],
             });
-            window.location.reload();
           } catch (addError) {
-            // Handle "add" error.
             console.error(addError);
             processErrorMessage(addError);
           }
         } else {
-          // Handle other "switch" errors.
           console.error(switchError);
           processErrorMessage(switchError);
         }
       } finally {
         triggerLoading(false);
+        await getNativeCoinBalance(selectedAccount as string);
       }
     },
-    [processErrorMessage, triggerLoading]
+    [
+      getNativeCoinBalance,
+      processErrorMessage,
+      selectedAccount,
+      selectedWallet,
+      triggerLoading,
+    ],
   );
 
   return (
@@ -64,7 +73,7 @@ export const SwitchChain = () => {
         <>
           <Button
             onClick={() => setOpenSelectChainModal(true)}
-            loading={globalLoading}
+            disabled={globalLoading}
           >
             Switch Chain
           </Button>

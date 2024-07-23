@@ -2,6 +2,7 @@ interface ChainExplorer {
   name: string;
   url: string;
   standard: string;
+  icon?: string;
 }
 
 interface NativeCurrency {
@@ -13,8 +14,10 @@ interface NativeCurrency {
 export interface IChainData {
   name: string;
   title?: string;
+  icon?: string;
   chain: string;
   rpc: string[];
+  features?: any;
   faucets: string[];
   nativeCurrency: NativeCurrency;
   infoURL: string;
@@ -23,4 +26,5 @@ export interface IChainData {
   networkId: number;
   slip44: number;
   explorers?: ChainExplorer[];
+  networkName: string;
 }

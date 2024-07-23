@@ -36,11 +36,11 @@ interface EIP1193Provider {
   path?: string;
   sendAsync?: (
     request: { method: string; params?: Array<unknown> },
-    callback: (error: Error | null, response: unknown) => void
+    callback: (error: Error | null, response: unknown) => void,
   ) => void;
   send?: (
     request: { method: string; params?: Array<unknown> },
-    callback: (error: Error | null, response: unknown) => void
+    callback: (error: Error | null, response: unknown) => void,
   ) => void;
   request: (request: {
     method: string;
@@ -51,4 +51,5 @@ interface EIP1193Provider {
 interface WalletError {
   code?: string;
   message?: string;
+  shortMessage?: string;
 }

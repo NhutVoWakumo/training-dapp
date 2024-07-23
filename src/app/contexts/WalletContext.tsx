@@ -1,5 +1,6 @@
 "use client";
 
+import { BrowserProvider, ethers } from "ethers";
 import {
   PropsWithChildren,
   createContext,
@@ -7,8 +8,17 @@ import {
   useEffect,
   useState,
 } from "react";
+import { capitalizeFirstLetter, formatRoundEther } from "../utils";
+import {
+  useDisconnect,
+  useWalletInfo,
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from "@web3modal/ethers/react";
 
-import { formatEther } from "ethers";
+import { MESSAGE_DURATION } from "../constants";
+import Moralis from "moralis";
+import { message } from "antd";
 
 type SelectedAccountByWallet = Record<string, string | null>;
 
@@ -19,24 +29,21 @@ interface WalletProviderContext {
   errorMessage: string | null;
   chainId: string;
   globalLoading: boolean;
+  currentProvider: any;
+  currentBalance: string;
 
-  connectWallet: (walletUuid: string) => Promise<void>;
+  connectInstalledWallet: (walletUuid: string) => Promise<void>;
   disconnectWallet: () => void;
   triggerLoading: (loading: boolean) => void;
   clearError: () => void;
   processErrorMessage: (error: any) => void;
-  getAccountBalance: (
-    walletProvider: EIP1193Provider,
-    address: string
-  ) => Promise<string>;
+  getNativeCoinBalance: (address: string) => Promise<string>;
+  getChainId: () => Promise<string>;
 }
 
 declare global {
   interface WindowEventMap {
     "eip6963:announceProvider": CustomEvent;
-  }
-  interface Window {
-    ethereum?: any;
   }
 }
 
@@ -47,74 +54,69 @@ const initialValue: WalletProviderContext = {
   errorMessage: null,
   chainId: "",
   globalLoading: false,
+  currentProvider: undefined,
+  currentBalance: "",
 
-  connectWallet: async (walletUuid: string) => {},
+  connectInstalledWallet: async (id: string) => {},
   disconnectWallet: () => {},
   triggerLoading: (loading: boolean) => {},
   clearError: () => {},
   processErrorMessage: (error: any) => {},
-  getAccountBalance: async (
-    walletProvider: EIP1193Provider,
-    address: string
-  ) => {
+  getNativeCoinBalance: async (address: string) => {
     return "";
   },
+  getChainId: async () => "",
 };
 
 export const WalletProviderContext =
   createContext<WalletProviderContext>(initialValue);
 
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>(
-    {}
-  );
+  const { address, isConnected, chainId } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
+  const { walletInfo } = useWalletInfo();
+  const { disconnect } = useDisconnect();
+
   const [selectedWalletRdns, setSelectedWalletRdns] = useState<string | null>(
-    null
+    null,
   );
   const [selectedAccountByWalletRdns, setSelectedAccountByWalletRdns] =
     useState<SelectedAccountByWallet>({});
+  const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>(
+    {},
+  );
   const [selectedChain, setSelectedChain] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [currentProvider, setCurrentProvider] = useState<BrowserProvider>();
+  const [currentAccount, setCurrentAccount] = useState<string | null>(null);
+  const [currentWallet, setCurrentWallet] =
+    useState<EIP6963ProviderDetail | null>(null);
+  const [currentBalance, setCurrentBalance] = useState<string>("0.0");
 
   const clearError = () => setErrorMessage("");
   const triggerLoading = (value: boolean) => setLoading(value);
 
   const processErrorMessage = useCallback((error: any) => {
     const walletError: WalletError = error as WalletError;
-    setErrorMessage(`${walletError.message}`);
+    const curentMessage = walletError.shortMessage ?? walletError.message;
+
+    if (!curentMessage) return;
+
+    setErrorMessage(`${curentMessage}`);
+    message.open({
+      content: `${capitalizeFirstLetter(curentMessage)}`,
+      duration: MESSAGE_DURATION,
+    });
   }, []);
 
-  const handleAccountChange = useCallback(
-    (accounts: string[]) => {
-      if (accounts.length <= 0) return;
-
-      const account = accounts[0];
-
-      setSelectedAccountByWalletRdns((currentAccounts) => ({
-        ...currentAccounts,
-        [selectedWalletRdns as string]: account,
-      }));
-
-      localStorage.setItem(
-        "selectedAccountByWalletRdns",
-        JSON.stringify({
-          ...selectedAccountByWalletRdns,
-          [selectedWalletRdns as string]: account,
-        })
-      );
-    },
-    [selectedAccountByWalletRdns, selectedWalletRdns]
-  );
-
   const getChainId = useCallback(async () => {
-    if (!window.ethereum) return "";
+    if (!currentWallet?.provider) return "";
 
     setLoading(true);
     try {
-      const chainId = (await window.ethereum.request({
+      const chainId = (await currentWallet.provider.request({
         method: "eth_chainId",
-        params: [],
       })) as string;
 
       const convertedChainId = BigInt(chainId).toString();
@@ -129,12 +131,43 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [processErrorMessage]);
+  }, [processErrorMessage, currentWallet]);
 
-  const connectWallet = useCallback(
-    async (walletRdns: string) => {
-      console.log("connecting");
+  const getNativeCoinBalance = useCallback(
+    async (address: string) => {
+      if (!currentWallet?.provider || !address) return "0.0";
+
       setLoading(true);
+      try {
+        const weiValue = (await currentWallet.provider.request({
+          method: "eth_getBalance",
+          params: [address, "latest"],
+        })) as string;
+
+        const formattedBalance = formatRoundEther(weiValue);
+        setCurrentBalance(formattedBalance);
+
+        return formattedBalance;
+      } catch (error) {
+        console.error("Failed to get balance:", error);
+        processErrorMessage(error);
+        return "0";
+      } finally {
+        setLoading(false);
+      }
+    },
+    [processErrorMessage, currentWallet],
+  );
+
+  const resetApp = useCallback(() => {
+    setCurrentAccount("");
+    setCurrentProvider(undefined);
+    setCurrentWallet(null);
+    setSelectedChain("");
+  }, []);
+
+  const connectInstalledWallet = useCallback(
+    async (walletRdns: string) => {
       try {
         const wallet = wallets[walletRdns];
         const accounts = (await wallet.provider.request({
@@ -147,6 +180,8 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
             ...currentAccounts,
             [wallet.info.rdns]: accounts[0],
           }));
+          setCurrentAccount(accounts[0]);
+          setCurrentWallet(wallet);
 
           localStorage.setItem("selectedWalletRdns", wallet.info.rdns);
           localStorage.setItem(
@@ -154,82 +189,160 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
             JSON.stringify({
               ...selectedAccountByWalletRdns,
               [wallet.info.rdns]: accounts[0],
-            })
+            }),
           );
         }
       } catch (error) {
-        console.error("Failed to connect to provider:", error);
         processErrorMessage(error);
-      } finally {
-        setLoading(false);
       }
     },
-    [wallets, selectedAccountByWalletRdns, processErrorMessage]
-  );
-
-  const getAccountBalance = useCallback(
-    async (walletProvider: EIP1193Provider, address: string) => {
-      setLoading(true);
-      try {
-        if (!address) return "0";
-
-        const balance = (await walletProvider.request({
-          method: "eth_getBalance",
-          params: [address, "latest"],
-        })) as string;
-        const weiValue = BigInt(balance);
-
-        return formatEther(weiValue);
-      } catch (error) {
-        console.error("Failed to get balance:", error);
-        processErrorMessage(error);
-        return "0";
-      } finally {
-        setLoading(false);
-      }
-    },
-    [processErrorMessage]
+    [wallets, selectedAccountByWalletRdns, processErrorMessage],
   );
 
   const disconnectWallet = useCallback(async () => {
-    if (selectedWalletRdns) {
-      setLoading(true);
-      setSelectedAccountByWalletRdns((currentAccounts) => ({
-        ...currentAccounts,
-        [selectedWalletRdns]: null,
-      }));
-
-      const wallet = wallets[selectedWalletRdns];
-      setSelectedWalletRdns(null);
-      localStorage.removeItem("selectedWalletRdns");
-
-      try {
-        await wallet.provider.request({
+    try {
+      if (selectedWalletRdns) {
+        await currentWallet?.provider?.request({
           method: "wallet_revokePermissions",
           params: [{ eth_accounts: {} }],
         });
-      } catch (error) {
-        console.error("Failed to revoke permissions:", error);
-        processErrorMessage(error);
-      } finally {
-        setLoading(false);
+        setSelectedAccountByWalletRdns((currentAccounts) => ({
+          ...currentAccounts,
+          [selectedWalletRdns]: null,
+        }));
+
+        setSelectedWalletRdns(null);
+        localStorage.removeItem("selectedWalletRdns");
+      } else {
+        await disconnect();
       }
+
+      resetApp();
+    } catch (error) {
+      console.error("Failed to disconnect:", error);
+      processErrorMessage(error);
     }
-  }, [processErrorMessage, selectedWalletRdns, wallets]);
+  }, [
+    currentWallet?.provider,
+    disconnect,
+    processErrorMessage,
+    resetApp,
+    selectedWalletRdns,
+  ]);
+
+  useEffect(() => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.BrowserProvider(walletProvider);
+
+      setCurrentProvider(ethersProvider);
+    }
+  }, [isConnected, walletProvider]);
+
+  useEffect(() => {
+    if (chainId) setSelectedChain(chainId.toString());
+  }, [chainId]);
+
+  useEffect(() => {
+    if (address) setCurrentAccount(address);
+  }, [address]);
+
+  useEffect(() => {
+    if (walletInfo && walletProvider) {
+      setCurrentWallet({
+        info: walletInfo as any,
+        provider: walletProvider as EIP1193Provider,
+      });
+    }
+  }, [walletInfo, walletProvider]);
+
+  useEffect(() => {
+    // reset app when not connect (for walletconnect option)
+    if (!isConnected) resetApp();
+  }, [isConnected, resetApp]);
+
+  useEffect(() => {
+    if (currentAccount) {
+      getNativeCoinBalance(currentAccount);
+      getChainId();
+    }
+  }, [currentAccount, chainId, getNativeCoinBalance, getChainId]);
+
+  useEffect(() => {
+    if (selectedWalletRdns && selectedAccountByWalletRdns[selectedWalletRdns]) {
+      setCurrentAccount(selectedAccountByWalletRdns[selectedWalletRdns]);
+    }
+  }, [selectedAccountByWalletRdns, selectedWalletRdns]);
+
+  useEffect(() => {
+    if (selectedWalletRdns && wallets[selectedWalletRdns].provider) {
+      setCurrentProvider(
+        new BrowserProvider(wallets[selectedWalletRdns].provider),
+      );
+    }
+  }, [selectedWalletRdns, wallets]);
+
+  useEffect(() => {
+    // TODO: find ways to remove this any
+    const provider = window.ethereum as any;
+    if (!provider) return;
+
+    // reset app when not connect (for metamask option)
+    if (currentWallet && !provider.isConnected()) resetApp();
+  }, [currentWallet, resetApp]);
+
+  useEffect(() => {
+    Moralis.start({
+      apiKey: process.env.NEXT_PUBLIC_MORALIS_KEY,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    // TODO: find ways to remove this any
+    const provider = window.ethereum as any;
+
+    provider.on("chainChanged", () => {
+      getChainId();
+    });
+    provider.on("accountsChanged", (addresses: string[]) => {
+      if (addresses?.[0]) {
+        setCurrentAccount(addresses[0]);
+        if (selectedWalletRdns)
+          localStorage.setItem(
+            "selectedAccountByWalletRdns",
+            JSON.stringify({
+              ...selectedAccountByWalletRdns,
+              [selectedWalletRdns]: addresses[0],
+            }),
+          );
+      } else disconnectWallet();
+    });
+    provider.on("disconnect", disconnectWallet);
+
+    return () => {
+      provider.removeAllListeners();
+    };
+  }, [
+    getChainId,
+    disconnectWallet,
+    selectedWalletRdns,
+    selectedAccountByWalletRdns,
+  ]);
 
   useEffect(() => {
     const savedSelectedWalletRdns = localStorage.getItem("selectedWalletRdns");
     const savedSelectedAccountByWalletRdns = localStorage.getItem(
-      "selectedAccountByWalletRdns"
+      "selectedAccountByWalletRdns",
     );
 
     if (savedSelectedAccountByWalletRdns) {
       setSelectedAccountByWalletRdns(
-        JSON.parse(savedSelectedAccountByWalletRdns)
+        JSON.parse(savedSelectedAccountByWalletRdns),
       );
     }
 
-    function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
+    const onAnnouncement = (event: EIP6963AnnounceProviderEvent) => {
       setWallets((currentWallets) => ({
         ...currentWallets,
         [event.detail.info.rdns]: event.detail,
@@ -240,8 +353,9 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         event.detail.info.rdns === savedSelectedWalletRdns
       ) {
         setSelectedWalletRdns(savedSelectedWalletRdns);
+        setCurrentWallet(event.detail);
       }
-    }
+    };
 
     window.addEventListener("eip6963:announceProvider", onAnnouncement);
     window.dispatchEvent(new Event("eip6963:requestProvider"));
@@ -250,41 +364,22 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       window.removeEventListener("eip6963:announceProvider", onAnnouncement);
   }, []);
 
-  useEffect(() => {
-    window.ethereum.on("chainChanged", () => window.location.reload());
-    window.ethereum.on("accountsChanged", (accounts: string[]) =>
-      handleAccountChange(accounts)
-    );
-
-    return () => {
-      window.ethereum.off("chainChanged", () => window.location.reload());
-      window.ethereum.off("accountsChanged", (accounts: string[]) =>
-        handleAccountChange(accounts)
-      );
-    };
-  }, [handleAccountChange]);
-
-  useEffect(() => {
-    getChainId();
-  }, [getChainId]);
-
   const contextValue: WalletProviderContext = {
     wallets,
-    selectedWallet:
-      selectedWalletRdns === null ? null : wallets[selectedWalletRdns],
-    selectedAccount:
-      selectedWalletRdns === null
-        ? null
-        : selectedAccountByWalletRdns[selectedWalletRdns],
+    selectedWallet: currentWallet,
+    selectedAccount: currentAccount,
     chainId: selectedChain,
     globalLoading: loading,
+    currentProvider,
+    currentBalance,
     triggerLoading,
     errorMessage,
-    connectWallet,
+    connectInstalledWallet,
     disconnectWallet,
     clearError,
     processErrorMessage,
-    getAccountBalance,
+    getNativeCoinBalance,
+    getChainId,
   };
 
   return (

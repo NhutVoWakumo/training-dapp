@@ -1,15 +1,16 @@
 "use client";
 
-import { Button, Form, Input, InputNumber, Modal, message } from "antd";
+import { Button, message } from "antd";
 import React, { useCallback, useState } from "react";
+import { chainData, sepoliaChainId } from "../constants";
 
+import { TransferModal } from "./TransferModal";
 import { ethers } from "ethers";
 import { formatValueToHexWei } from "../utils";
-import { sepoliaChainId } from "../constants";
 import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "../hooks";
 
-export const Transfer = () => {
+export const TransferNativeCoin = () => {
   const [form] = useForm();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const {
@@ -19,6 +20,8 @@ export const Transfer = () => {
     triggerLoading,
     globalLoading,
     processErrorMessage,
+    currentBalance,
+    getNativeCoinBalance,
   } = useWalletProvider();
 
   const handleTransfer = useCallback(async () => {
@@ -27,6 +30,8 @@ export const Transfer = () => {
     try {
       const values = await form?.validateFields();
       const { address, value } = values;
+      setOpenModal(false);
+
       const transactionHash = (await selectedWallet?.provider.request({
         method: "eth_sendTransaction",
         params: [
@@ -37,13 +42,15 @@ export const Transfer = () => {
           },
         ],
       })) as string;
-      setOpenModal(false);
-      console.log(transactionHash);
-      if (chainId.toString() === sepoliaChainId) {
+
+      const currentNetworkName = chainData.find(
+        (item) => item.chainId.toString() === chainId,
+      );
+      if (currentNetworkName) {
         try {
           const provider = new ethers.EtherscanProvider(
-            "sepolia",
-            process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
+            currentNetworkName.networkName,
+            process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY,
           );
           const receipt = await provider.waitForTransaction(transactionHash);
           console.log(receipt);
@@ -52,11 +59,12 @@ export const Transfer = () => {
           processErrorMessage(error);
         }
       }
+
+      await getNativeCoinBalance(selectedAccount);
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
     } finally {
-      setOpenModal(false);
       triggerLoading(false);
     }
   }, [
@@ -65,35 +73,37 @@ export const Transfer = () => {
     triggerLoading,
     form,
     chainId,
+    getNativeCoinBalance,
     processErrorMessage,
   ]);
+
+  const onOk = useCallback(async () => {
+    try {
+      await form?.validateFields();
+      await handleTransfer();
+    } catch (error) {
+      console.error(error);
+    }
+  }, [form, handleTransfer]);
 
   return (
     <>
       {selectedWallet && (
         <>
-          <Button onClick={() => setOpenModal(true)} loading={globalLoading}>
+          <Button onClick={() => setOpenModal(true)} disabled={globalLoading}>
             Transfer
           </Button>
-          <Modal
+          <TransferModal
             open={openModal}
             onCancel={() => setOpenModal(false)}
-            onOk={handleTransfer}
-            loading={globalLoading}
-          >
-            <Form form={form} layout="vertical">
-              <Form.Item label={"Address"} name={"address"}>
-                <Input />
-              </Form.Item>
-              <Form.Item label={"Value"} name={"value"}>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  stringMode
-                  controls={false}
-                />
-              </Form.Item>
-            </Form>
-          </Modal>
+            onOk={onOk}
+            okButtonProps={{
+              loading: globalLoading,
+            }}
+            globalLoading={globalLoading}
+            currentBalance={currentBalance}
+            form={form}
+          />
         </>
       )}
     </>
