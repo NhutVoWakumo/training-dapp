@@ -96,7 +96,7 @@ export const CollectionTable = () => {
           ) : null
         }
         classNames={{
-          base: "max-h-[520px] overflow-x-scroll",
+          base: "max-h-[520px] md:overflow-x-hidden overflow-x-scroll",
           table: "min-h-[400px]",
         }}
       >
@@ -117,9 +117,9 @@ export const CollectionTable = () => {
             <Spinner color="warning" label="Finding treasure..." />
           }
           emptyContent={
-            <div className="flex flex-col gap-5 w-full justify-center items-center">
+            <div className="flex w-full flex-col items-center justify-center gap-5">
               <GiOpenTreasureChest size={70} />
-              <p className="text-lg text-gray font-medium">
+              <p className="text-gray text-lg font-medium">
                 Let&apos;s make your treasure full
               </p>
             </div>

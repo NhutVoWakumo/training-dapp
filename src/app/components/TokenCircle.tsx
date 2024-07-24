@@ -15,7 +15,7 @@ export const TokenCircle = ({
 }: TokenCircleProps) => {
   return (
     <motion.div
-      className="relative w-64 h-64 mx-auto mt-20"
+      className="relative mx-auto mt-20 h-64 w-64"
       animate={{
         rotate: clockwise ? 360 : -360,
       }}
@@ -33,7 +33,7 @@ export const TokenCircle = ({
         return (
           <Avatar
             key={index}
-            className="absolute w-16 h-16 rounded-full"
+            className="absolute h-16 w-16 rounded-full"
             style={{
               top: `calc(50% + ${y}px - 20px)`,
               left: `calc(50% + ${x}px - 20px)`,

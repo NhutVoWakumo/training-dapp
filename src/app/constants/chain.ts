@@ -1,3 +1,4 @@
+import { Chain } from "opensea-js";
 import { IChainData } from "../interfaces";
 
 export const chainData: IChainData[] = [
@@ -6,6 +7,8 @@ export const chainData: IChainData[] = [
     chain: "ETH",
     icon: "ethereum",
     networkName: "mainnet",
+    openseaName: Chain.Mainnet,
+    openseaUrl: "https://api.opensea.io",
     rpc: [
       "https://mainnet.infura.io/v3/${INFURA_API_KEY}",
       "wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}",
@@ -68,6 +71,8 @@ export const chainData: IChainData[] = [
     name: "BNB Smart Chain Mainnet",
     chain: "BSC",
     networkName: "bnb",
+    openseaName: Chain.BNB,
+    openseaUrl: "https://api.opensea.io",
     rpc: [
       "https://bsc-dataseed1.bnbchain.org",
       "https://bsc-dataseed2.bnbchain.org",
@@ -114,6 +119,8 @@ export const chainData: IChainData[] = [
     name: "BNB Smart Chain Testnet",
     chain: "BSC",
     networkName: "bnbt",
+    openseaName: Chain.BNBTestnet,
+    openseaUrl: "https://testnets-api.opensea.io",
     rpc: [
       "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
       "https://data-seed-prebsc-2-s1.bnbchain.org:8545",
@@ -148,6 +155,8 @@ export const chainData: IChainData[] = [
     title: "Ethereum Testnet Sepolia",
     chain: "ETH",
     networkName: "sepolia",
+    openseaName: Chain.Sepolia,
+    openseaUrl: "https://testnets-api.opensea.io",
     rpc: [
       "https://rpc.sepolia.org",
       "https://rpc2.sepolia.org",
@@ -191,6 +200,9 @@ export const chainData: IChainData[] = [
     name: "Polygon Amoy",
     title: "Polygon Testnet Amoy",
     chain: "Polygon",
+    openseaName: Chain.Amoy,
+    openseaUrl: "https://testnets-api.opensea.io",
+
     rpc: [
       "wss://polygon-amoy-bor-rpc.publicnode.com",
       "wss://polygon-amoy-bor-rpc.publicnode.com	",

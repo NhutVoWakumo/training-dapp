@@ -3,7 +3,7 @@ import { TokenTable } from "./components";
 
 const Tokens = () => {
   return (
-    <div className="flex w-full h-full flex-col">
+    <div className="flex h-full w-full flex-col px-3 md:px-10">
       <TokenTable />
     </div>
   );

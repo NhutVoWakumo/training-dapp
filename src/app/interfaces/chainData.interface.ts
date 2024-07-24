@@ -1,3 +1,5 @@
+import { Chain } from "opensea-js";
+
 interface ChainExplorer {
   name: string;
   url: string;
@@ -27,4 +29,6 @@ export interface IChainData {
   slip44: number;
   explorers?: ChainExplorer[];
   networkName: string;
+  openseaName: any;
+  openseaUrl: string;
 }

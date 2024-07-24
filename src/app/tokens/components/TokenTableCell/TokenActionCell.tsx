@@ -52,7 +52,7 @@ export const TokenActionCell = ({
   );
   return (
     <>
-      <div className="relative items-center gap-2 hidden md:flex">
+      <div className="relative hidden items-center gap-2 md:flex">
         {items.map((item) => (
           <Tooltip key={item.key} content={item.label}>
             <Button
@@ -69,7 +69,7 @@ export const TokenActionCell = ({
           </Tooltip>
         ))}
       </div>
-      <div className="md:hidden flex size-full justify-center">
+      <div className="flex size-full justify-center md:hidden">
         <Dropdown>
           <DropdownTrigger>
             <Button

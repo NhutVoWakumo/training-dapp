@@ -32,14 +32,19 @@ export const Navbar = () => {
   );
 
   return (
-    <NextUINavbar onMenuOpenChange={setIsMenuOpen}>
+    <NextUINavbar
+      onMenuOpenChange={setIsMenuOpen}
+      classNames={{
+        wrapper: "max-w-[95vw]",
+      }}
+    >
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           className="sm:hidden"
         />
         <NavbarBrand>
-          <div className="flex gap-3 items-center">
+          <div className="flex items-center gap-3">
             <GiAlienFire size={28} />
             <Link href="/" className="font-bold text-inherit">
               HEHE
@@ -48,7 +53,7 @@ export const Navbar = () => {
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+      <NavbarContent className="hidden gap-4 sm:flex" justify="center">
         {navbarItems.map((item, index) => {
           const isActive = checkElementActive(item.link);
           return (
