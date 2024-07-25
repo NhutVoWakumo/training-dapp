@@ -97,7 +97,6 @@ export const CollectionTable = () => {
         }
         classNames={{
           base: "max-h-[520px] md:overflow-x-hidden overflow-x-scroll",
-          table: "min-h-[400px]",
         }}
       >
         <TableHeader columns={columns}>

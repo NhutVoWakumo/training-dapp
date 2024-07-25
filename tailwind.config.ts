@@ -45,6 +45,9 @@ const config: Config = {
         gradient: "gradient 6s linear infinite",
         typing: "typing 2s steps(20) infinite alternate, blink .8s infinite",
       },
+      colors: {
+        "light-sky": "#8fc7ff",
+      },
     },
     screens: {
       sm: "640px",

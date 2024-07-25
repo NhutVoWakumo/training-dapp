@@ -1,4 +1,4 @@
-import { IChainData, OpenseaNFT } from "@/app/interfaces";
+import { IChainData, OpenseaNFTWithoutTrait } from "@/app/interfaces";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { NFTList } from "./NFTList";
@@ -19,7 +19,9 @@ export const OwnedNFTList = ({
 }: OwnedNFTListProps) => {
   const [currentCursor, setCurrentCursor] = useState<string>();
   const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [ownedNFTList, setOwnedNFTList] = useState<OpenseaNFT[]>([]);
+  const [ownedNFTList, setOwnedNFTList] = useState<OpenseaNFTWithoutTrait[]>(
+    [],
+  );
   const [loading, setLoading] = useState<boolean>(false);
 
   const resetList = useCallback(() => {

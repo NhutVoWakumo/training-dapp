@@ -117,11 +117,11 @@ interface RankingFeatures {
 }
 
 export interface OpenseaNFTListResponse {
-  nfts: OpenseaNFT[];
+  nfts: OpenseaNFTWithoutTrait[];
   next: string;
 }
 
-export interface OpenseaNFT {
+export interface OpenseaNFTWithoutTrait {
   identifier: string;
   collection: string;
   contract: string;
@@ -136,4 +136,20 @@ export interface OpenseaNFT {
   updated_at: string;
   is_disabled: boolean;
   is_nsfw: boolean;
+}
+
+export interface OpenseaAssetEvent {
+  event_type: string;
+  chain: string;
+  transaction: string;
+  from_address: string;
+  to_address: string;
+  quantity: number;
+  nft: OpenseaNFTWithoutTrait;
+  event_timestamp: number;
+}
+
+export interface OpenseaAssetEventResponse {
+  asset_events: OpenseaAssetEvent[];
+  next: string;
 }
