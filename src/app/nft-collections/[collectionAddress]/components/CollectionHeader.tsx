@@ -86,7 +86,7 @@ export const CollectionHeader = ({
                     seed={jsNumberForAddress(collectionData.owner)}
                   />
                 }
-                className="h-6 w-6 text-tiny"
+                className="size-6 text-tiny"
               />
               <Snippet
                 codeString={collectionData.owner}
