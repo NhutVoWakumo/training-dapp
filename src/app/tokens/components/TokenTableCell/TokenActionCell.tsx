@@ -26,8 +26,8 @@ interface ButtonItem extends Record<string, any> {
 }
 
 export const TokenActionCell = ({
-  isDisabled,
-  isLoading,
+  isDisabled = false,
+  isLoading = false,
   onImportClick,
   onTransferClick,
 }: TokenActionCellProps) => {

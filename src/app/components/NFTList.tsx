@@ -2,10 +2,11 @@
 
 import { Avatar, Button, Divider, Image, List, Skeleton, message } from "antd";
 import { Contract, InfuraProvider, TransactionResponse } from "ethers";
-import { ERC721ABI, TOKEN_STANDARDS, chainData } from "../constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { TOKEN_STANDARDS, chainData } from "../constants";
 import { formatChainAsHex, parseIPFSToNormalUrl } from "../utils";
 
+import { ERC721ABI } from "../abis";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Moralis from "moralis";
 import { NFTData } from "../interfaces";

@@ -7,7 +7,7 @@ import {
 } from "ethers";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { ERC20ABI } from "@/app/constants";
+import { ERC20ABI } from "@/app/abis";
 import { ITokenData } from "../interfaces";
 import Moralis from "moralis";
 import { chainData } from "@/app/constants";
