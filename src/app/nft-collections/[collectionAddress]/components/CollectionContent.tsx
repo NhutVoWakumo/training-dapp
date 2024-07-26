@@ -2,10 +2,11 @@
 
 import { AllNFTList, OwnedNFTList } from "./NFTList";
 import { Card, CardBody, Tab, Tabs } from "@nextui-org/react";
-import { GiGoldBar, GiGoldMine } from "react-icons/gi";
+import { GiGoldBar, GiGoldMine, GiSellCard } from "react-icons/gi";
 import { IChainData, OpenseaCollection } from "@/app/interfaces";
 
 import React from "react";
+import { TransferNFT } from "./TransferNFT";
 import { useWalletProvider } from "@/app/hooks";
 
 interface CollectionContentProps {
@@ -71,6 +72,26 @@ export const CollectionContent = ({
           <Card>
             <CardBody>
               <OwnedNFTList
+                accountAddress={selectedAccount as string}
+                slug={slug}
+                chainData={chainData}
+                nftImageFallback={collectionData.image_url}
+              />
+            </CardBody>
+          </Card>
+        </Tab>
+        <Tab
+          key={"transfer-nfts"}
+          title={
+            <div className="flex items-center space-x-2">
+              <GiSellCard size={24} />
+              <span>Transfer</span>
+            </div>
+          }
+        >
+          <Card>
+            <CardBody>
+              <TransferNFT
                 accountAddress={selectedAccount as string}
                 slug={slug}
                 chainData={chainData}

@@ -1,11 +1,13 @@
 "use client";
 
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, InfuraProvider, ethers } from "ethers";
+import { MESSAGE_DURATION, chainData } from "../constants";
 import {
   PropsWithChildren,
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { capitalizeFirstLetter, formatRoundEther } from "../utils";
@@ -16,7 +18,6 @@ import {
   useWeb3ModalProvider,
 } from "@web3modal/ethers/react";
 
-import { MESSAGE_DURATION } from "../constants";
 import Moralis from "moralis";
 import { message } from "antd";
 
@@ -31,6 +32,7 @@ interface WalletProviderContext {
   globalLoading: boolean;
   currentProvider: any;
   currentBalance: string;
+  infuraProvider?: InfuraProvider;
 
   connectInstalledWallet: (walletUuid: string) => Promise<void>;
   disconnectWallet: () => void;
@@ -93,9 +95,18 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [currentWallet, setCurrentWallet] =
     useState<EIP6963ProviderDetail | null>(null);
   const [currentBalance, setCurrentBalance] = useState<string>("0.0");
+  const [currentInfuraChainName, setCurrentInfuraChainName] =
+    useState<string>();
 
   const clearError = () => setErrorMessage("");
   const triggerLoading = (value: boolean) => setLoading(value);
+
+  const infuraProvider = useMemo(() => {
+    return new InfuraProvider(
+      currentInfuraChainName,
+      process.env.NEXT_PUBLIC_INFURA_API_KEY,
+    );
+  }, [currentInfuraChainName]);
 
   const processErrorMessage = useCallback((error: any) => {
     const walletError: WalletError = error as WalletError;
@@ -364,6 +375,16 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       window.removeEventListener("eip6963:announceProvider", onAnnouncement);
   }, []);
 
+  useEffect(() => {
+    const chain = chainData.find(
+      (item) => item.chainId.toString() === selectedChain,
+    );
+
+    if (!chain || !currentAccount) return;
+
+    setCurrentInfuraChainName(chain.networkName);
+  }, [selectedChain, currentAccount]);
+
   const contextValue: WalletProviderContext = {
     wallets,
     selectedWallet: currentWallet,
@@ -380,6 +401,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     processErrorMessage,
     getNativeCoinBalance,
     getChainId,
+    infuraProvider,
   };
 
   return (

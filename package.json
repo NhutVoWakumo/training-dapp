@@ -16,6 +16,7 @@
     "@ant-design/icons": "^5.3.7",
     "@api3/logos": "^0.1.42",
     "@nextui-org/react": "^2.4.6",
+    "@nextui-org/use-infinite-scroll": "^2.1.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
     "@walletconnect/web3wallet": "^1.12.3",

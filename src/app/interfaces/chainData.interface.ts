@@ -1,5 +1,3 @@
-import { Chain } from "opensea-js";
-
 interface ChainExplorer {
   name: string;
   url: string;
