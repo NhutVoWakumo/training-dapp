@@ -184,7 +184,10 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
   useEffect(() => {
     const chain = chainData.find((item) => item.chainId.toString() === chainId);
 
-    if (!chain || !account) return;
+    if (!chain || !account) {
+      setTokenList({});
+      return;
+    }
 
     setCurrentInfuraChainName(chain.networkName);
 

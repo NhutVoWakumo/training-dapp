@@ -34,7 +34,7 @@ export const formatHexEncodedMessage = (message: string) => {
 
 export const formatRoundEther = (wei: BigNumberish): string => {
   let ether = formatEther(wei);
-  ether = (+ether).toFixed(4);
+  ether = (+ether).toFixed(3);
 
   return ether;
 };

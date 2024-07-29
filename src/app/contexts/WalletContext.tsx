@@ -10,7 +10,11 @@ import {
   useMemo,
   useState,
 } from "react";
-import { capitalizeFirstLetter, formatRoundEther } from "../utils";
+import {
+  capitalizeFirstLetter,
+  formatChainAsHex,
+  formatRoundEther,
+} from "../utils";
 import {
   useDisconnect,
   useWalletInfo,
@@ -18,6 +22,7 @@ import {
   useWeb3ModalProvider,
 } from "@web3modal/ethers/react";
 
+import { IChainData } from "../interfaces";
 import Moralis from "moralis";
 import { message } from "antd";
 
@@ -40,6 +45,7 @@ interface WalletProviderContext {
   clearError: () => void;
   processErrorMessage: (error: any) => void;
   getNativeCoinBalance: (address: string) => Promise<string>;
+  switchChain: (chain: IChainData) => Promise<void>;
   getChainId: () => Promise<string>;
 }
 
@@ -59,14 +65,13 @@ const initialValue: WalletProviderContext = {
   currentProvider: undefined,
   currentBalance: "",
 
-  connectInstalledWallet: async (id: string) => {},
+  connectInstalledWallet: async () => {},
   disconnectWallet: () => {},
-  triggerLoading: (loading: boolean) => {},
+  triggerLoading: () => {},
   clearError: () => {},
-  processErrorMessage: (error: any) => {},
-  getNativeCoinBalance: async (address: string) => {
-    return "";
-  },
+  processErrorMessage: () => {},
+  getNativeCoinBalance: async () => "",
+  switchChain: async () => {},
   getChainId: async () => "",
 };
 
@@ -241,6 +246,47 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     selectedWalletRdns,
   ]);
 
+  const switchChain = useCallback(
+    async (chain: IChainData) => {
+      if (!currentWallet?.provider) return;
+
+      triggerLoading(true);
+      try {
+        await currentWallet.provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: formatChainAsHex(chain.chainId) }],
+        });
+      } catch (switchError) {
+        const error = switchError as WalletError;
+        if (Number(error.code) === 4902) {
+          try {
+            await currentWallet.provider.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: formatChainAsHex(chain.chainId),
+                  chainName: chain.name,
+                  rpcUrls: chain.rpc,
+                  nativeCurrency: chain.nativeCurrency,
+                },
+              ],
+            });
+          } catch (addError) {
+            console.error(addError);
+            processErrorMessage(addError);
+          }
+        } else {
+          console.error(switchError);
+          processErrorMessage(switchError);
+        }
+      } finally {
+        triggerLoading(false);
+        await getNativeCoinBalance(currentAccount as string);
+      }
+    },
+    [currentAccount, currentWallet, getNativeCoinBalance, processErrorMessage],
+  );
+
   useEffect(() => {
     if (walletProvider) {
       const ethersProvider = new ethers.BrowserProvider(walletProvider);
@@ -273,10 +319,15 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     if (currentAccount) {
-      getNativeCoinBalance(currentAccount);
       getChainId();
     }
-  }, [currentAccount, chainId, getNativeCoinBalance, getChainId]);
+  }, [currentAccount, chainId, getChainId]);
+
+  useEffect(() => {
+    if (currentAccount) {
+      getNativeCoinBalance(currentAccount);
+    }
+  }, [currentAccount, selectedChain, getNativeCoinBalance, chainId]);
 
   useEffect(() => {
     if (selectedWalletRdns && selectedAccountByWalletRdns[selectedWalletRdns]) {
@@ -400,6 +451,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     clearError,
     processErrorMessage,
     getNativeCoinBalance,
+    switchChain,
     getChainId,
     infuraProvider,
   };

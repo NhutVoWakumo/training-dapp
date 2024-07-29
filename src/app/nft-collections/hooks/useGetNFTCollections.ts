@@ -65,12 +65,15 @@ export const useGetNFTCollections = ({
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
+
+      if (!collectionList.length) setCanLoadMore(false);
     } finally {
       setLocalLoading(false);
       triggerLoading(false);
     }
   }, [
     chainId,
+    collectionList,
     currentCursor,
     pageLimit,
     processErrorMessage,

@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownMenu,
@@ -11,7 +12,7 @@ import { formatAddress } from "@/app/utils";
 import { useWalletProvider } from "@/app/hooks";
 
 export const AvatarMenu = () => {
-  const { selectedAccount } = useWalletProvider();
+  const { selectedAccount, disconnectWallet } = useWalletProvider();
 
   if (!selectedAccount) return <></>;
 
@@ -37,10 +38,21 @@ export const AvatarMenu = () => {
           <p className="font-semibold">Connected with</p>
           <p className="font-semibold">{formatAddress(selectedAccount)}</p>
         </DropdownItem>
-        <DropdownItem key="profile">My Profile</DropdownItem>
-        <DropdownItem key="transfer">Transfer</DropdownItem>
-        <DropdownItem key="switch-chain">Switch chain</DropdownItem>
-        <DropdownItem key="disconnect" color="danger" className="text-red-500">
+        <DropdownItem key="divider">
+          <Divider />
+        </DropdownItem>
+        <DropdownItem
+          key="copy-address"
+          onClick={() => navigator.clipboard.writeText(selectedAccount)}
+        >
+          Copy Address
+        </DropdownItem>
+        <DropdownItem
+          key="disconnect"
+          color="danger"
+          className="text-red-500"
+          onClick={disconnectWallet}
+        >
           Disconnect
         </DropdownItem>
       </DropdownMenu>

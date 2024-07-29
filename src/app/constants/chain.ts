@@ -133,7 +133,7 @@ export const chainData: IChainData[] = [
     faucets: ["https://testnet.bnbchain.org/faucet-smart"],
     nativeCurrency: {
       name: "BNB Chain Native Token",
-      symbol: "tBNB",
+      symbol: "BNB",
       decimals: 18,
     },
     infoURL: "https://www.bnbchain.org/en",
