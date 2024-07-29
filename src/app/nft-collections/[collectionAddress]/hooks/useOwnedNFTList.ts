@@ -61,12 +61,13 @@ export const useOwnedNFTList = ({
   useEffect(() => {
     resetList();
     getOwnedNFT();
-  }, []);
+  }, [accountAddress]);
 
   return {
     isLoading: loading,
     nftList: ownedNFTList,
     onLoadMore: getOwnedNFT,
     canLoadMore,
+    resetList,
   };
 };

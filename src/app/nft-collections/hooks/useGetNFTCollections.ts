@@ -23,11 +23,11 @@ export const useGetNFTCollections = ({
   const resetNFTList = useCallback(() => {
     setCollectionList([]);
     setCurrentCursor(undefined);
-    setCanLoadMore(true);
-  }, []);
+    setCanLoadMore(!!selectedAccount);
+  }, [selectedAccount]);
 
   const getNFTCollectionList = useCallback(async () => {
-    if (!chainId || !selectedAccount || !canLoadMore) return;
+    if (!chainId || !selectedAccount) return;
 
     setLocalLoading(true);
     triggerLoading(true);
@@ -70,7 +70,6 @@ export const useGetNFTCollections = ({
       triggerLoading(false);
     }
   }, [
-    canLoadMore,
     chainId,
     currentCursor,
     pageLimit,

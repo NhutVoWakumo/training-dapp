@@ -1,5 +1,13 @@
-import { Button, Card, CardFooter, CardHeader, Image } from "@nextui-org/react";
+import {
+  Button,
+  Card,
+  CardFooter,
+  CardHeader,
+  Image,
+  Spinner,
+} from "@nextui-org/react";
 
+import { GiCardPick } from "react-icons/gi";
 import Link from "next/link";
 import { OpenseaNFTWithoutTrait } from "@/app/interfaces";
 import React from "react";
@@ -19,6 +27,19 @@ export const NFTList = ({
   onLoadMore,
   nftImageFallback,
 }: NFTListProps) => {
+  if (!dataList.length)
+    return (
+      <div className="flex h-40 w-full flex-col items-center justify-center gap-4">
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <GiCardPick size={70} />
+            <p>Nothing here, let&apos;s collect them all!</p>
+          </div>
+        )}
+      </div>
+    );
   return (
     <div>
       <div className="grid gap-5 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">

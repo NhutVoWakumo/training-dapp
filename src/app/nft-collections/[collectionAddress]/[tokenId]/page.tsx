@@ -9,26 +9,29 @@ import {
   getOpenseaCollectionMetaData,
   getOpenseaNFTData,
 } from "../utils";
+import { useParams, useRouter } from "next/navigation";
 
 import { BiAnalyse } from "react-icons/bi";
 import { EmptyPage } from "@/app/components";
 import { NFTData } from "./components/NFTData";
 import { NFTEventTable } from "./components/NFTEventTable";
 import { NFTImage } from "./components";
-import { chainData } from "@/app/constants";
+import { RedirectToTableModal } from "../../components";
 import { getStringParam } from "@/app/utils";
-import { useParams } from "next/navigation";
 import { useWalletProvider } from "@/app/hooks";
 
 const NFTDetail = () => {
   const params = useParams();
   const { tokenId, collectionAddress } = params;
   const { chainId } = useWalletProvider();
+  const router = useRouter();
 
   const [currentOpenseaChain, setCurrentOpenseaChain] = useState<IChainData>();
   const [currentNFTData, setCurrentNFTData] = useState<OpenseaNFT>();
   const [loading, setLoading] = useState<boolean>(false);
   const [collectionData, setCollectionData] = useState<OpenseaCollection>();
+  const [isNotCorrectChainId, setIsNotCorrectChainId] =
+    useState<boolean>(false);
 
   const getCollectionSlug = useCallback(async () => {
     if (!currentOpenseaChain) return;
@@ -44,6 +47,7 @@ const NFTDetail = () => {
       return slug;
     } catch (error) {
       console.error(error);
+      setIsNotCorrectChainId(true);
     }
   }, [collectionAddress, currentOpenseaChain]);
 
@@ -54,7 +58,10 @@ const NFTDetail = () => {
 
     try {
       const slug = await getCollectionSlug();
-      if (!slug) return;
+      if (!slug) {
+        setIsNotCorrectChainId(true);
+        return;
+      }
 
       const { data } = await getOpenseaCollectionMetaData(
         currentOpenseaChain,
@@ -64,6 +71,7 @@ const NFTDetail = () => {
       setCollectionData(data);
     } catch (error) {
       console.error(error);
+      setIsNotCorrectChainId(true);
     } finally {
       setLoading(false);
     }
@@ -101,6 +109,8 @@ const NFTDetail = () => {
     getCollectionMetaData();
   }, [getCollectionMetaData]);
 
+  if (loading) return <EmptyPage />;
+
   return (
     <>
       {currentNFTData && collectionData ? (
@@ -137,7 +147,10 @@ const NFTDetail = () => {
           </Accordion>
         </div>
       ) : (
-        <EmptyPage />
+        <RedirectToTableModal
+          isOpen={!collectionData}
+          onConfirm={() => router.push("/nft-collections")}
+        />
       )}
     </>
   );

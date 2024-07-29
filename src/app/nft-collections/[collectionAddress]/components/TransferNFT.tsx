@@ -38,11 +38,12 @@ export const TransferNFT = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedNFT, setSelectedNFT] = useState<OpenseaNFTWithoutTrait>();
   const [localLoading, setLocalLoading] = useState<boolean>(false);
-  const { canLoadMore, isLoading, nftList, onLoadMore } = useOwnedNFTList({
-    collectionSlug: slug,
-    currentChainData: chainData as IChainData,
-    accountAddress,
-  });
+  const { canLoadMore, isLoading, nftList, onLoadMore, resetList } =
+    useOwnedNFTList({
+      collectionSlug: slug,
+      currentChainData: chainData as IChainData,
+      accountAddress,
+    });
 
   const { infuraProvider, currentProvider, processErrorMessage } =
     useWalletProvider();
@@ -55,25 +56,39 @@ export const TransferNFT = ({
   });
 
   const handleTranferNFT = useCallback(async () => {
-    if (!currentProvider) return;
+    if (
+      !currentProvider ||
+      !selectedNFT?.contract ||
+      !selectedNFT.token_standard
+    )
+      return;
 
     setLocalLoading(true);
     try {
       const { to, tokenId, amount } = await form.validateFields();
-      console.log({ to, tokenId, amount });
-      const abi =
-        selectedNFT?.token_standard === TOKEN_STANDARDS.ERC1155
-          ? ERC1155ABI
-          : ERC721ABI;
+      const isTokenERC1155 =
+        selectedNFT?.token_standard === TOKEN_STANDARDS.ERC1155;
+      const abi = isTokenERC1155 ? ERC1155ABI : ERC721ABI;
 
       const signer = await currentProvider.getSigner();
-      const contract = new Contract(accountAddress, abi, signer);
+      const contract = new Contract(selectedNFT?.contract, abi, signer);
 
-      const transactionResponse = (await contract?.safeTransferFrom(
-        accountAddress,
-        to,
-        tokenId,
-      )) as TransactionResponse;
+      let transactionResponse;
+
+      if (isTokenERC1155) {
+        transactionResponse = (await contract?.safeTransferFrom(
+          accountAddress,
+          to,
+          tokenId,
+          amount,
+        )) as TransactionResponse;
+      } else {
+        transactionResponse = (await contract?.safeTransferFrom(
+          accountAddress,
+          to,
+          tokenId,
+        )) as TransactionResponse;
+      }
 
       const receipt = await infuraProvider?.waitForTransaction(
         transactionResponse.hash,
@@ -86,6 +101,9 @@ export const TransferNFT = ({
       processErrorMessage(error);
     } finally {
       setLocalLoading(false);
+      resetList();
+      setSelectedNFT(undefined);
+      form?.resetFields();
     }
   }, [
     accountAddress,
@@ -93,7 +111,8 @@ export const TransferNFT = ({
     form,
     infuraProvider,
     processErrorMessage,
-    selectedNFT?.token_standard,
+    resetList,
+    selectedNFT,
   ]);
 
   return (
@@ -145,6 +164,7 @@ export const TransferNFT = ({
                 scrollRef={scrollerRef}
                 selectionMode="single"
                 onOpenChange={setIsOpen}
+                disabled={!nftList.length}
                 onSelectionChange={(key) => {
                   const isEmptySelect = !new Set(key).size;
                   if (isEmptySelect) {

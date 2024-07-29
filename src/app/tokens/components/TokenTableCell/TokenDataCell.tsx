@@ -12,7 +12,6 @@ interface TokenDataCellProps {
 }
 
 export const TokenDataCell = ({ token }: TokenDataCellProps) => {
-  console.log(SymbolLogo(token.symbol.toUpperCase()));
   const getTokenLogoSrc = useCallback((tokenSymbol: string) => {
     const thirdPartyLogo = SymbolLogo(tokenSymbol.toUpperCase()) as any;
     const logoSrc = thirdPartyLogo.src as string;
