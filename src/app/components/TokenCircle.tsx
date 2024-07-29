@@ -1,13 +1,26 @@
 "use client";
 
-import { Avatar } from "antd";
+import { Avatar } from "@nextui-org/react";
+import { SymbolLogo } from "@api3/logos";
 import { motion } from "framer-motion";
-import { tokenImages } from "../constants";
 
 interface TokenCircleProps {
   circleRadius?: number;
   clockwise?: boolean;
 }
+
+const tokenSymbol = [
+  "busd",
+  "usdt",
+  "eth",
+  "bnb",
+  "link",
+  "uni",
+  "celo",
+  "sushi",
+  "gmt",
+  "klay",
+];
 
 export const TokenCircle = ({
   circleRadius = 200,
@@ -25,22 +38,36 @@ export const TokenCircle = ({
         ease: "linear",
       }}
     >
-      {tokenImages.map((image, index) => {
-        const angle = (index / tokenImages.length) * 360;
+      {tokenSymbol.map((symbol, index) => {
+        const angle = (index / tokenSymbol.length) * 360;
         const x = circleRadius * Math.cos((angle * Math.PI) / 180);
         const y = circleRadius * Math.sin((angle * Math.PI) / 180);
 
         return (
-          <Avatar
+          <motion.div
             key={index}
-            className="absolute size-16 rounded-full"
-            style={{
+            initial={{
+              top: "50%",
+              left: "50%",
+            }}
+            animate={{
               top: `calc(50% + ${y}px - 20px)`,
               left: `calc(50% + ${x}px - 20px)`,
             }}
-            src={image}
-            alt={`token-${index}`}
-          />
+            transition={{
+              delay: index * 0.1,
+              duration: 1,
+              ease: "easeOut",
+            }}
+            className="absolute size-16"
+          >
+            <Avatar
+              size="lg"
+              className="rounded-full"
+              src={(SymbolLogo(symbol) as any).src}
+              alt={`token-${index}`}
+            />
+          </motion.div>
         );
       })}
     </motion.div>

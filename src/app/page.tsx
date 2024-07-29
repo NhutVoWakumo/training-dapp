@@ -10,7 +10,7 @@ export default function Home() {
             <p className="text-4xl font-semibold text-white">
               Connect and explore
             </p>
-            <p className="text-purple-yellow-gradient animate-gradient text-6xl font-semibold text-transparent">
+            <p className="text-purple-yellow-gradient animate-gradient text-center text-6xl font-semibold text-transparent">
               the Web3 world
             </p>
           </div>
