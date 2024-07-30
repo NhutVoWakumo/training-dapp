@@ -12,6 +12,7 @@ import { ITokenData } from "../interfaces";
 import Moralis from "moralis";
 import { chainData } from "@/app/constants";
 import { formatChainAsHex } from "@/app/utils";
+import toast from "react-hot-toast";
 import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "@/app/hooks";
 
@@ -172,6 +173,7 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
           await infuraProvider.waitForTransaction(transactionHash);
 
         console.log(receipt);
+        toast("Transaction completed");
         return receipt;
       } catch (error) {
         console.error(error);

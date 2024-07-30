@@ -98,6 +98,7 @@ export const TokenTable = () => {
           await refetchAccountBalance(selectedAccount, currentToken);
       }
       onClose();
+      form.resetFields();
     } catch (error) {
       console.error(error);
       processErrorMessage(error);

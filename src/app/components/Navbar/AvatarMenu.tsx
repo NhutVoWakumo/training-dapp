@@ -6,14 +6,40 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/react";
+import React, { useCallback } from "react";
+import { useSignAndVerifyMessage, useWalletProvider } from "@/app/hooks";
 
-import React from "react";
 import { formatAddress } from "@/app/utils";
+import { messageToSign } from "@/app/constants";
 import toast from "react-hot-toast";
-import { useWalletProvider } from "@/app/hooks";
 
 export const AvatarMenu = () => {
-  const { selectedAccount, disconnectWallet } = useWalletProvider();
+  const {
+    selectedAccount,
+    disconnectWallet,
+    globalLoading,
+    processErrorMessage,
+  } = useWalletProvider();
+  const { signMessage, verifyMessage } = useSignAndVerifyMessage();
+
+  const verifyAccount = useCallback(async () => {
+    try {
+      const signedData = await signMessage(messageToSign);
+
+      if (!signedData) return toast.error("An error occur while sign message");
+
+      const { signature, address: signerAddress } = signedData;
+
+      const publicAddress = verifyMessage(messageToSign, signature);
+
+      if (publicAddress === signerAddress) return toast.success("Verified");
+
+      return toast.error("Unable to verify");
+    } catch (error) {
+      console.error(error);
+      processErrorMessage(error);
+    }
+  }, [processErrorMessage, signMessage, verifyMessage]);
 
   if (!selectedAccount) return <></>;
 
@@ -41,6 +67,13 @@ export const AvatarMenu = () => {
         </DropdownItem>
         <DropdownItem key="divider">
           <Divider />
+        </DropdownItem>
+        <DropdownItem
+          key="verify-account"
+          onClick={verifyAccount}
+          isReadOnly={globalLoading}
+        >
+          Verify Account
         </DropdownItem>
         <DropdownItem
           key="copy-address"

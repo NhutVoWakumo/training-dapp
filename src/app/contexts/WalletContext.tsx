@@ -35,7 +35,7 @@ interface WalletProviderContext {
   errorMessage: string | null;
   chainId: string;
   globalLoading: boolean;
-  currentProvider: any;
+  currentProvider: BrowserProvider | undefined;
   currentBalance: string;
   infuraProvider?: InfuraProvider;
 
