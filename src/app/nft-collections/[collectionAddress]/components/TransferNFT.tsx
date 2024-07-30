@@ -11,11 +11,12 @@ import {
 import { BiPackage, BiSolidWallet } from "react-icons/bi";
 import { Contract, TransactionResponse, isAddress } from "ethers";
 import { ERC1155ABI, ERC721ABI } from "@/app/abis";
-import { Form, message } from "antd";
 import { IChainData, OpenseaNFTWithoutTrait } from "@/app/interfaces";
 import React, { useCallback, useState } from "react";
 
+import { Form } from "antd";
 import { TOKEN_STANDARDS } from "@/app/constants";
+import toast from "react-hot-toast";
 import { useForm } from "antd/es/form/Form";
 import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
 import { useOwnedNFTList } from "../hooks/useOwnedNFTList";
@@ -63,6 +64,8 @@ export const TransferNFT = ({
     )
       return;
 
+    console.log(accountAddress);
+
     setLocalLoading(true);
     try {
       const { to, tokenId, amount } = await form.validateFields();
@@ -95,13 +98,14 @@ export const TransferNFT = ({
       );
 
       console.log(receipt);
-      message.success("Transaction completed");
+      toast.success("Transaction completed");
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
     } finally {
       setLocalLoading(false);
       resetList();
+      onLoadMore();
       setSelectedNFT(undefined);
       form?.resetFields();
     }
@@ -110,6 +114,7 @@ export const TransferNFT = ({
     currentProvider,
     form,
     infuraProvider,
+    onLoadMore,
     processErrorMessage,
     resetList,
     selectedNFT,

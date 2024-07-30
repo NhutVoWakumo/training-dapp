@@ -102,6 +102,9 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [currentBalance, setCurrentBalance] = useState<string>("0.0");
   const [currentInfuraChainName, setCurrentInfuraChainName] =
     useState<string>();
+  const [isActive, setIsActive] = useState<boolean>(
+    isConnected || !!currentAccount || !!currentProvider,
+  );
 
   const clearError = () => setErrorMessage("");
   const triggerLoading = (value: boolean) => setLoading(value);
@@ -174,10 +177,11 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 
   const resetApp = useCallback(() => {
-    setCurrentAccount("");
-    setCurrentProvider(undefined);
-    setCurrentWallet(null);
-    setSelectedChain("");
+    setIsActive(() => false);
+    setCurrentAccount(() => "");
+    setCurrentProvider(() => undefined);
+    setCurrentWallet(() => null);
+    setSelectedChain(() => "");
   }, []);
 
   const connectInstalledWallet = useCallback(
@@ -189,6 +193,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         })) as string[];
 
         if (accounts?.[0]) {
+          setIsActive(true);
           setSelectedWalletRdns(wallet.info.rdns);
           setSelectedAccountByWalletRdns((currentAccounts) => ({
             ...currentAccounts,
@@ -255,27 +260,21 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
           params: [{ chainId: formatChainAsHex(chain.chainId) }],
         });
       } catch (switchError) {
-        const error = switchError as WalletError;
-        if (Number(error.code) === 4902) {
-          try {
-            await currentWallet.provider.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: formatChainAsHex(chain.chainId),
-                  chainName: chain.name,
-                  rpcUrls: chain.rpc,
-                  nativeCurrency: chain.nativeCurrency,
-                },
-              ],
-            });
-          } catch (addError) {
-            console.error(addError);
-            processErrorMessage(addError);
-          }
-        } else {
-          console.error(switchError);
-          processErrorMessage(switchError);
+        try {
+          await currentWallet.provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: formatChainAsHex(chain.chainId),
+                chainName: chain.name,
+                rpcUrls: chain.rpc,
+                nativeCurrency: chain.nativeCurrency,
+              },
+            ],
+          });
+        } catch (addError) {
+          console.error(addError);
+          processErrorMessage(addError);
         }
       } finally {
         triggerLoading(false);
@@ -290,6 +289,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const ethersProvider = new ethers.BrowserProvider(walletProvider);
 
       setCurrentProvider(ethersProvider);
+      setIsActive(true);
     }
   }, [isConnected, walletProvider]);
 
@@ -316,20 +316,21 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [isConnected, resetApp]);
 
   useEffect(() => {
-    if (currentAccount) {
+    if (currentAccount && isActive) {
       getChainId();
     }
-  }, [currentAccount, chainId, getChainId]);
+  }, [currentAccount, getChainId, isActive]);
 
   useEffect(() => {
-    if (currentAccount) {
+    if (currentAccount && isActive) {
       getNativeCoinBalance(currentAccount);
     }
-  }, [currentAccount, selectedChain, getNativeCoinBalance, chainId]);
+  }, [currentAccount, selectedChain, getNativeCoinBalance, isActive]);
 
   useEffect(() => {
     if (selectedWalletRdns && selectedAccountByWalletRdns[selectedWalletRdns]) {
       setCurrentAccount(selectedAccountByWalletRdns[selectedWalletRdns]);
+      setIsActive(true);
     }
   }, [selectedAccountByWalletRdns, selectedWalletRdns]);
 

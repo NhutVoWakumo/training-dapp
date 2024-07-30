@@ -28,8 +28,7 @@ export const useOwnedNFTList = ({
   }, []);
 
   const getOwnedNFT = useCallback(async () => {
-    if (!currentChainData || !collectionSlug || !canLoadMore || !accountAddress)
-      return;
+    if (!currentChainData || !collectionSlug || !accountAddress) return;
     setLoading(true);
 
     try {
@@ -50,13 +49,7 @@ export const useOwnedNFTList = ({
     } finally {
       setLoading(false);
     }
-  }, [
-    accountAddress,
-    canLoadMore,
-    currentChainData,
-    currentCursor,
-    collectionSlug,
-  ]);
+  }, [accountAddress, currentChainData, currentCursor, collectionSlug]);
 
   useEffect(() => {
     resetList();
