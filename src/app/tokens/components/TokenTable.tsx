@@ -1,6 +1,5 @@
 "use client";
 
-import { BiImport, BiRefresh, BiTransfer } from "react-icons/bi";
 import {
   Button,
   Pagination,
@@ -11,22 +10,25 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Tooltip,
-  User,
+  useDisclosure,
 } from "@nextui-org/react";
-import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import React, { useCallback, useMemo, useState } from "react";
+import {
+  TokenActionCell,
+  TokenBalanceCell,
+  TokenDataCell,
+} from "./TokenTableCell";
 
+import { BiRefresh } from "react-icons/bi";
 import { GiOpenTreasureChest } from "react-icons/gi";
 import { ITokenData } from "../interfaces";
-import { TransferModal } from "@/app/components";
+import { TransferModal } from "@/app/components/Transfer/TransferModal";
 import { columns } from "../constants";
 import { useERC20Tokens } from "../hooks";
-import { useForm } from "antd/es/form/Form";
 import { useWalletProvider } from "@/app/hooks";
 
 export const TokenTable = () => {
-  const [form] = useForm();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const { selectedAccount, chainId, globalLoading } = useWalletProvider();
   const {
     tokenList,
@@ -35,13 +37,13 @@ export const TokenTable = () => {
     refetchAccountBalance,
     getTransactionReceipt,
     loading,
+    form,
     getTokenList,
   } = useERC20Tokens({
     chainId,
     account: selectedAccount ?? "",
   });
   const [page, setPage] = useState<number>(1);
-  const [openModal, setOpenModal] = useState<boolean>(false);
   const [currentToken, setCurrentToken] = useState<ITokenData>();
   const rowsPerPage = 4;
 
@@ -61,81 +63,52 @@ export const TokenTable = () => {
     (token: ITokenData, columnKey: string) => {
       switch (columnKey) {
         case "token":
-          return (
-            <User
-              description={token.address}
-              name={token.name}
-              avatarProps={{
-                showFallback: true,
-                radius: "full",
-                src: token.logoUrl,
-                color: "warning",
-                isBordered: true,
-                fallback: (
-                  <Jazzicon
-                    diameter={100}
-                    seed={jsNumberForAddress(token.address)}
-                  />
-                ),
-              }}
-            >
-              {token.decimals}
-            </User>
-          );
+          return <TokenDataCell token={token} />;
 
         case "balance":
-          return (
-            <div className="font-medium">{`${token.balance} ${token.symbol}`}</div>
-          );
+          return <TokenBalanceCell token={token} />;
 
         case "actions":
           return (
-            <div className="relative flex items-center gap-2">
-              <Tooltip content="Transfer token">
-                <Button
-                  key={`transfer-${globalLoading}`}
-                  isIconOnly
-                  isDisabled={globalLoading}
-                  color="secondary"
-                  variant="faded"
-                  onClick={() => {
-                    setCurrentToken(token);
-                    setOpenModal(true);
-                  }}
-                >
-                  <BiTransfer size={22} />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Import token to wallet">
-                <Button
-                  key={`import-${globalLoading}`}
-                  isIconOnly
-                  isDisabled={globalLoading}
-                  color="secondary"
-                  variant="faded"
-                  onClick={() => importTokenToWallet(token)}
-                >
-                  <BiImport size={28} />
-                </Button>
-              </Tooltip>
-            </div>
+            <TokenActionCell
+              isDisabled={globalLoading}
+              onImportClick={() => importTokenToWallet(token)}
+              onTransferClick={() => {
+                setCurrentToken(token);
+                onOpen();
+              }}
+            />
           );
 
         default:
           return "";
       }
     },
-    [globalLoading, importTokenToWallet],
+    [globalLoading, importTokenToWallet, onOpen],
   );
 
-  const onOk = useCallback(async () => {
+  const onSubmit = useCallback(async () => {
     try {
       await form?.validateFields();
-      await transferToken(currentToken);
+      const hash = await transferToken(currentToken);
+      if (hash) {
+        await getTransactionReceipt(hash);
+        if (selectedAccount && currentToken)
+          await refetchAccountBalance(selectedAccount, currentToken);
+      }
+      onClose();
     } catch (error) {
       console.error(error);
     }
-  }, [currentToken, form, transferToken]);
+  }, [
+    currentToken,
+    form,
+    getTransactionReceipt,
+    onClose,
+    refetchAccountBalance,
+    selectedAccount,
+    transferToken,
+  ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -144,6 +117,7 @@ export const TokenTable = () => {
           ERC20 Tokens Table
         </p>
         <Button
+          size="sm"
           isIconOnly
           isLoading={loading}
           onClick={() => getTokenList(selectedAccount as string)}
@@ -203,9 +177,10 @@ export const TokenTable = () => {
         </TableBody>
       </Table>
       <TransferModal
-        open={openModal}
-        onCancel={() => setOpenModal(false)}
-        onOk={onOk}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onSubmit={onSubmit}
+        onClose={onClose}
         globalLoading={globalLoading}
         form={form}
         currentBalance={

@@ -2,9 +2,9 @@
 
 import { Button, message } from "antd";
 import React, { useCallback, useState } from "react";
-import { chainData, sepoliaChainId } from "../constants";
 
 import { TransferModal } from "./TransferModal";
+import { chainData } from "../constants";
 import { ethers } from "ethers";
 import { formatValueToHexWei } from "../utils";
 import { useForm } from "antd/es/form/Form";

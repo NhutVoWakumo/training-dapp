@@ -1,3 +1,4 @@
+import { BiDollarCircle, BiSolidWallet } from "react-icons/bi";
 import {
   Button,
   Input,
@@ -13,11 +14,11 @@ import { Form, FormInstance } from "antd";
 import React from "react";
 import { isAddress } from "ethers";
 
-interface TransferModalProps extends ModalProps {
+interface TransferModalProps extends Omit<ModalProps, "children"> {
   globalLoading: boolean;
   currentBalance?: string;
   form: FormInstance;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void>;
 }
 
 export const TransferModal = ({
@@ -28,7 +29,7 @@ export const TransferModal = ({
   ...props
 }: TransferModalProps) => {
   return (
-    <Modal {...props}>
+    <Modal hideCloseButton {...props}>
       <ModalContent>
         {(onClose) => (
           <>
@@ -36,7 +37,6 @@ export const TransferModal = ({
             <ModalBody>
               <Form form={form} layout="vertical" disabled={globalLoading}>
                 <Form.Item
-                  label={"Address"}
                   name={"address"}
                   rules={[
                     {
@@ -45,6 +45,8 @@ export const TransferModal = ({
                     },
                     {
                       validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+
                         if (!isAddress(value))
                           return Promise.reject(new Error("Invalid address"));
 
@@ -53,10 +55,16 @@ export const TransferModal = ({
                     },
                   ]}
                 >
-                  <Input />
+                  <Input
+                    className="text-white"
+                    endContent={<BiSolidWallet size={20} />}
+                    label={"Address"}
+                    placeholder="Please input address"
+                    variant="bordered"
+                    autoFocus
+                  />
                 </Form.Item>
                 <Form.Item
-                  label={"Value"}
                   name={"value"}
                   rules={[
                     {
@@ -85,7 +93,13 @@ export const TransferModal = ({
                     },
                   ]}
                 >
-                  <Input />
+                  <Input
+                    className="text-white"
+                    label={"Value"}
+                    endContent={<BiDollarCircle size={20} />}
+                    placeholder="Please input value"
+                    variant="bordered"
+                  />
                 </Form.Item>
               </Form>
             </ModalBody>
@@ -93,7 +107,11 @@ export const TransferModal = ({
               <Button color="default" variant="flat" onPress={onClose}>
                 Close
               </Button>
-              <Button color="secondary" onClick={onSubmit}>
+              <Button
+                color="secondary"
+                onClick={onSubmit}
+                isLoading={globalLoading}
+              >
                 Transfer
               </Button>
             </ModalFooter>

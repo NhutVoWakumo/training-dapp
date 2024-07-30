@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark text-foreground bg-background">
+    <html lang="en" className="dark text-foreground bg-background md:p-10 p-3">
       <body>
         <AppContext>
           <Web3Modal>
