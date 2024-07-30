@@ -255,6 +255,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
       triggerLoading(true);
       try {
+        console.log(chain.chainId);
         await currentWallet.provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: formatChainAsHex(chain.chainId) }],

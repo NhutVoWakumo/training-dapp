@@ -4,7 +4,6 @@ import {
   Avatar,
   Button,
   Divider,
-  Input,
   Modal,
   ModalBody,
   ModalContent,
@@ -28,7 +27,7 @@ import { delay, formatAddress, formatValueToHexWei } from "@/app/utils";
 import CountUp from "react-countup";
 import { TransferForm } from "../Transfer";
 import { chainData } from "@/app/constants";
-import { message } from "antd";
+import toast from "react-hot-toast";
 import { useForm } from "antd/es/form/Form";
 
 export const CoinBalanceAndChain = () => {
@@ -96,7 +95,7 @@ export const CoinBalanceAndChain = () => {
 
       const receipt = await infuraProvider?.waitForTransaction(transactionHash);
       console.log(receipt);
-      message.success("Transaction completed");
+      toast.success("Transaction completed");
 
       await onTransferFinish();
     } catch (error) {
