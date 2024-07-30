@@ -9,6 +9,7 @@ import {
 
 import React from "react";
 import { formatAddress } from "@/app/utils";
+import toast from "react-hot-toast";
 import { useWalletProvider } from "@/app/hooks";
 
 export const AvatarMenu = () => {
@@ -43,7 +44,10 @@ export const AvatarMenu = () => {
         </DropdownItem>
         <DropdownItem
           key="copy-address"
-          onClick={() => navigator.clipboard.writeText(selectedAccount)}
+          onClick={() => {
+            navigator.clipboard.writeText(selectedAccount);
+            toast.success("Copied to clipboard");
+          }}
         >
           Copy Address
         </DropdownItem>

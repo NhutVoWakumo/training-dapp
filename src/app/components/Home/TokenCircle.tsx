@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar } from "@nextui-org/react";
+import { Avatar, Image } from "@nextui-org/react";
+
 import { SymbolLogo } from "@api3/logos";
 import { motion } from "framer-motion";
 
@@ -61,9 +62,9 @@ export const TokenCircle = ({
             }}
             className="absolute size-16"
           >
-            <Avatar
-              size="lg"
-              className="rounded-full"
+            <Image
+              isBlurred
+              className="size-16 rounded-full shadow-lg"
               src={(SymbolLogo(symbol) as any).src}
               alt={`token-${index}`}
             />

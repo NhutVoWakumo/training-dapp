@@ -23,7 +23,7 @@ import { useWalletProvider } from "@/app/hooks";
 const NFTDetail = () => {
   const params = useParams();
   const { tokenId, collectionAddress } = params;
-  const { chainId } = useWalletProvider();
+  const { chainId, processErrorMessage } = useWalletProvider();
   const router = useRouter();
 
   const [currentOpenseaChain, setCurrentOpenseaChain] = useState<IChainData>();
@@ -48,8 +48,9 @@ const NFTDetail = () => {
     } catch (error) {
       console.error(error);
       setIsNotCorrectChainId(true);
+      processErrorMessage(error);
     }
-  }, [collectionAddress, currentOpenseaChain]);
+  }, [collectionAddress, currentOpenseaChain, processErrorMessage]);
 
   const getCollectionMetaData = useCallback(async () => {
     if (!currentOpenseaChain) return;
@@ -72,10 +73,11 @@ const NFTDetail = () => {
     } catch (error) {
       console.error(error);
       setIsNotCorrectChainId(true);
+      processErrorMessage(error);
     } finally {
       setLoading(false);
     }
-  }, [currentOpenseaChain, getCollectionSlug]);
+  }, [currentOpenseaChain, getCollectionSlug, processErrorMessage]);
 
   const getNFTMetaData = useCallback(async () => {
     if (!currentOpenseaChain) return;
@@ -90,8 +92,9 @@ const NFTDetail = () => {
       setCurrentNFTData(data);
     } catch (error) {
       console.error(error);
+      processErrorMessage(error);
     }
-  }, [collectionAddress, currentOpenseaChain, tokenId]);
+  }, [collectionAddress, currentOpenseaChain, processErrorMessage, tokenId]);
 
   useEffect(() => {
     if (!chainId) return;
@@ -110,6 +113,14 @@ const NFTDetail = () => {
   }, [getCollectionMetaData]);
 
   if (loading) return <EmptyPage />;
+
+  if (isNotCorrectChainId)
+    return (
+      <RedirectToTableModal
+        isOpen={isNotCorrectChainId}
+        onConfirm={() => router.push("/nft-collections")}
+      />
+    );
 
   return (
     <>

@@ -20,7 +20,7 @@ const CollectionDetail = ({
   params: { collectionAddress: string };
 }) => {
   const { collectionAddress: address } = params;
-  const { chainId } = useWalletProvider();
+  const { chainId, processErrorMessage } = useWalletProvider();
   const router = useRouter();
 
   const [currentOpenseaChain, setCurrentOpenseaChain] = useState<IChainData>();
@@ -53,8 +53,9 @@ const CollectionDetail = ({
     } catch (error) {
       console.error(error);
       setIsNotCorrectChainId(true);
+      processErrorMessage(error);
     }
-  }, [address, currentOpenseaChain]);
+  }, [address, currentOpenseaChain, processErrorMessage]);
 
   const getCollectionMetaData = useCallback(async () => {
     if (!currentOpenseaChain) return;
@@ -77,10 +78,11 @@ const CollectionDetail = ({
     } catch (error) {
       console.error(error);
       setIsNotCorrectChainId(true);
+      processErrorMessage(error);
     } finally {
       setLoading(false);
     }
-  }, [currentOpenseaChain, getCollectionSlug]);
+  }, [currentOpenseaChain, getCollectionSlug, processErrorMessage]);
 
   useEffect(() => {
     if (!chainId) return;

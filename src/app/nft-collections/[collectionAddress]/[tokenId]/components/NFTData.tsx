@@ -184,6 +184,7 @@ export const NFTData = ({
         variant="light"
         selectionMode="multiple"
         defaultExpandedKeys={"all"}
+        isDisabled={isLoading}
       >
         <AccordionItem
           key="description"

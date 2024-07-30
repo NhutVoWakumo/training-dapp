@@ -29,7 +29,8 @@ import { useWalletProvider } from "@/app/hooks";
 
 export const TokenTable = () => {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-  const { selectedAccount, chainId, globalLoading } = useWalletProvider();
+  const { selectedAccount, chainId, globalLoading, processErrorMessage } =
+    useWalletProvider();
   const {
     tokenList,
     importTokenToWallet,
@@ -99,12 +100,14 @@ export const TokenTable = () => {
       onClose();
     } catch (error) {
       console.error(error);
+      processErrorMessage(error);
     }
   }, [
     currentToken,
     form,
     getTransactionReceipt,
     onClose,
+    processErrorMessage,
     refetchAccountBalance,
     selectedAccount,
     transferToken,

@@ -2,11 +2,10 @@ import "./globals.css";
 
 import { AppContext, Web3Modal } from "./contexts";
 
-import { Inter } from "next/font/google";
+import { MESSAGE_DURATION } from "./constants";
 import type { Metadata } from "next";
 import { Navbar } from "./components";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Training DApp",
@@ -24,6 +23,18 @@ export default function RootLayout({
         <Web3Modal>
           <AppContext>
             <div>
+              <Toaster
+                position="top-center"
+                reverseOrder={false}
+                gutter={8}
+                toastOptions={{
+                  duration: MESSAGE_DURATION,
+                  style: {
+                    background: "black",
+                    color: "white",
+                  },
+                }}
+              />
               <Navbar />
               {children}
             </div>

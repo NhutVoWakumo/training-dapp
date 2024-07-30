@@ -1,4 +1,4 @@
-export const MESSAGE_DURATION = 5;
+export const MESSAGE_DURATION = 3000;
 export const IPFS_PROVIDER_URL = "https://gateway.pinata.cloud/ipfs/";
 
 export enum TOKEN_STANDARDS {

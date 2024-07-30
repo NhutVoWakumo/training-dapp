@@ -1,7 +1,6 @@
 "use client";
 
 import { BrowserProvider, InfuraProvider, ethers } from "ethers";
-import { MESSAGE_DURATION, chainData } from "../constants";
 import {
   PropsWithChildren,
   createContext,
@@ -24,7 +23,8 @@ import {
 
 import { IChainData } from "../interfaces";
 import Moralis from "moralis";
-import { message } from "antd";
+import { chainData } from "../constants";
+import toast from "react-hot-toast";
 
 type SelectedAccountByWallet = Record<string, string | null>;
 
@@ -120,10 +120,8 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (!curentMessage) return;
 
     setErrorMessage(`${curentMessage}`);
-    message.open({
-      content: `${capitalizeFirstLetter(curentMessage)}`,
-      duration: MESSAGE_DURATION,
-    });
+
+    toast.error(`${capitalizeFirstLetter(curentMessage)}`);
   }, []);
 
   const getChainId = useCallback(async () => {
