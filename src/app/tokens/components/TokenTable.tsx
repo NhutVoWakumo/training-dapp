@@ -111,9 +111,9 @@ export const TokenTable = () => {
   ]);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex justify-between items-center mb-5">
-        <p className="text-3xl text-transparent font-semibold bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 bg-clip-text animate-gradient">
+    <div className="my-5 flex flex-col gap-5">
+      <div className="mb-5 flex items-center justify-between">
+        <p className="animate-gradient bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 bg-clip-text text-3xl font-semibold text-transparent">
           ERC20 Tokens Table
         </p>
         <Button
@@ -159,9 +159,9 @@ export const TokenTable = () => {
             <Spinner color="warning" label="Finding treasure..." />
           }
           emptyContent={
-            <div className="flex flex-col gap-5 w-full justify-center items-center">
+            <div className="flex w-full flex-col items-center justify-center gap-5">
               <GiOpenTreasureChest size={70} />
-              <p className="text-lg text-gray font-medium">
+              <p className="text-gray text-lg font-medium">
                 Let&apos;s make your treasure full
               </p>
             </div>

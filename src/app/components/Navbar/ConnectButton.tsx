@@ -30,7 +30,7 @@ export const ConnectButton = () => {
         <ModalContent>
           <ModalHeader>Connect your wallet</ModalHeader>
           <ModalBody>
-            <div className="flex justify-center align-middle flex-col gap-4 my-5">
+            <div className="my-5 flex flex-col justify-center gap-4 align-middle">
               <h2>Wallets Detected:</h2>
               <div className="flex flex-col gap-3">
                 {Object.values(wallets).map(

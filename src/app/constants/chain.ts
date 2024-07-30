@@ -6,6 +6,8 @@ export const chainData: IChainData[] = [
     chain: "ETH",
     icon: "ethereum",
     networkName: "mainnet",
+    openseaName: "ethereum",
+    openseaUrl: "https://api.opensea.io",
     rpc: [
       "https://mainnet.infura.io/v3/${INFURA_API_KEY}",
       "wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}",
@@ -68,6 +70,8 @@ export const chainData: IChainData[] = [
     name: "BNB Smart Chain Mainnet",
     chain: "BSC",
     networkName: "bnb",
+    openseaName: "bsc",
+    openseaUrl: "https://api.opensea.io",
     rpc: [
       "https://bsc-dataseed1.bnbchain.org",
       "https://bsc-dataseed2.bnbchain.org",
@@ -114,6 +118,8 @@ export const chainData: IChainData[] = [
     name: "BNB Smart Chain Testnet",
     chain: "BSC",
     networkName: "bnbt",
+    openseaName: "bsctestnet",
+    openseaUrl: "https://testnets-api.opensea.io",
     rpc: [
       "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
       "https://data-seed-prebsc-2-s1.bnbchain.org:8545",
@@ -148,6 +154,8 @@ export const chainData: IChainData[] = [
     title: "Ethereum Testnet Sepolia",
     chain: "ETH",
     networkName: "sepolia",
+    openseaName: "sepolia",
+    openseaUrl: "https://testnets-api.opensea.io",
     rpc: [
       "https://rpc.sepolia.org",
       "https://rpc2.sepolia.org",
@@ -191,6 +199,8 @@ export const chainData: IChainData[] = [
     name: "Polygon Amoy",
     title: "Polygon Testnet Amoy",
     chain: "Polygon",
+    openseaName: "amoy",
+    openseaUrl: "https://testnets-api.opensea.io",
     rpc: [
       "wss://polygon-amoy-bor-rpc.publicnode.com",
       "wss://polygon-amoy-bor-rpc.publicnode.com	",
@@ -206,7 +216,13 @@ export const chainData: IChainData[] = [
     chainId: 80002,
     networkId: 80002,
     slip44: 1,
-    explorers: [],
+    explorers: [
+      {
+        name: "polygonscan-amoy",
+        url: "https://amoy.polygonscan.com/",
+        standard: "EIP3091",
+      },
+    ],
     networkName: "matic-amoy",
   },
 ];
