@@ -2,9 +2,8 @@ import {
   Accordion,
   AccordionItem,
   Avatar,
+  AvatarGroup,
   Button,
-  ButtonGroup,
-  Image,
   Link,
   Tooltip,
   User,
@@ -42,6 +41,13 @@ interface NFTDetailItem {
   children: ReactNode;
 }
 
+interface NFTImagePreview {
+  url: string;
+  tokenId: string;
+}
+
+const NUMBER_OF_NFT_PREVIEW_IMAGE = 5;
+
 export const NFTData = ({
   nftData,
   isLoading,
@@ -49,7 +55,9 @@ export const NFTData = ({
   collectionAddress,
   chainData,
 }: NFTDataProps) => {
-  const [firstThreeNFTImages, setFirstThreeNFTImages] = useState<string[]>([]);
+  const [previewNFTImages, setPreviewNFTImages] = useState<NFTImagePreview[]>(
+    [],
+  );
 
   const nftDetails: NFTDetailItem[] = useMemo(() => {
     return [
@@ -114,11 +122,12 @@ export const NFTData = ({
       );
       const nftImageUrls = data.nfts
         .filter((nft) => !!nft.display_image_url)
-        .map((nft) => nft.display_image_url);
+        .map((nft) => ({
+          url: nft.display_image_url,
+          tokenId: nft.identifier.toString(),
+        }));
 
-      while (nftImageUrls.length < 3) nftImageUrls.push("");
-
-      setFirstThreeNFTImages(nftImageUrls.slice(0, 3));
+      setPreviewNFTImages(nftImageUrls.slice(0, NUMBER_OF_NFT_PREVIEW_IMAGE));
     } catch (error) {
       console.error(error);
     }
@@ -146,22 +155,27 @@ export const NFTData = ({
                   size: "lg",
                 }}
               />
-              <ButtonGroup radius="sm">
-                {firstThreeNFTImages.map((img, index) => (
-                  <Button
+
+              <AvatarGroup
+                isBordered
+                max={NUMBER_OF_NFT_PREVIEW_IMAGE}
+                total={
+                  collectionData.total_supply > previewNFTImages.length
+                    ? collectionData.total_supply - previewNFTImages.length
+                    : 0
+                }
+                className="ml-2"
+              >
+                {previewNFTImages.map((img, index) => (
+                  <Link
                     key={index}
-                    variant="flat"
-                    className="size-24 bg-transparent p-0"
-                    isIconOnly
+                    isExternal
+                    href={`/nft-collections/${collectionAddress}/${img.tokenId}`}
                   >
-                    <Image
-                      src={img}
-                      className="object-cover"
-                      alt="nft preview"
-                    />
-                  </Button>
+                    <Avatar src={img.url} alt="nft preview" />
+                  </Link>
                 ))}
-              </ButtonGroup>
+              </AvatarGroup>
             </div>
           }
         >

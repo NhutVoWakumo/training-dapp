@@ -47,13 +47,14 @@ export const NFTList = ({
           <Link
             key={index}
             href={`${window.location.pathname}/${nft.identifier}`}
+            className="flex flex-col"
           >
             <Card
               isHoverable
               isPressable
               isFooterBlurred
               radius="md"
-              className="min-h-40 border-none"
+              className="min-h-40 flex-1 border-none"
             >
               {nft?.display_image_url ? (
                 <Image
@@ -70,7 +71,6 @@ export const NFTList = ({
                       Content not available yet
                     </p>
                   </CardHeader>
-
                   <Image
                     src={nftImageFallback}
                     alt={nft.identifier}
