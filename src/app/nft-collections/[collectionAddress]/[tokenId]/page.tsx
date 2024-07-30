@@ -20,6 +20,14 @@ import { RedirectToTableModal } from "../../components";
 import { getStringParam } from "@/app/utils";
 import { useWalletProvider } from "@/app/hooks";
 
+interface NFTDetailParams {
+  tokenId: string;
+  collectionAddress: string;
+}
+export interface NFTDetailProps {
+  params: NFTDetailParams;
+}
+
 const NFTDetail = () => {
   const params = useParams();
   const { tokenId, collectionAddress } = params;

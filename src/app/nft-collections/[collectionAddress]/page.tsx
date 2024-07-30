@@ -14,11 +14,15 @@ import { RedirectToTableModal } from "../components";
 import { useRouter } from "next/navigation";
 import { useWalletProvider } from "@/app/hooks";
 
-const CollectionDetail = ({
-  params,
-}: {
-  params: { collectionAddress: string };
-}) => {
+export interface CollectionDetailProps {
+  params: CollectionDetailParams;
+}
+
+interface CollectionDetailParams {
+  collectionAddress: string;
+}
+
+const CollectionDetail = ({ params }: CollectionDetailProps) => {
   const { collectionAddress: address } = params;
   const { chainId, processErrorMessage } = useWalletProvider();
   const router = useRouter();
