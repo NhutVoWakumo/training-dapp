@@ -113,7 +113,7 @@ export const NFTData = ({
     ];
   }, [chainData, collectionAddress, nftData]);
 
-  const threePreviewNFT = useCallback(async () => {
+  const previewNFT = useCallback(async () => {
     if (!chainData) return [];
     try {
       const { data } = await getOpenseaNFTsByContract(
@@ -134,8 +134,8 @@ export const NFTData = ({
   }, [chainData, collectionAddress]);
 
   useEffect(() => {
-    threePreviewNFT();
-  }, [threePreviewNFT]);
+    previewNFT();
+  }, [previewNFT]);
 
   return (
     <div className="flex w-full flex-col gap-5 p-3">
@@ -189,7 +189,7 @@ export const NFTData = ({
         </Tooltip>
       </div>
       <div className="flex flex-col gap-2">
-        <p className="text-2xl font-bold lg:text-3xl">
+        <p className="w-full break-words text-2xl font-bold lg:text-3xl">
           {nftData.name ?? `${collectionData.name} #${nftData.identifier}`}
         </p>
         <p className="">{`Owned by ${formatAddress(nftData.owners?.[0]?.address)}`}</p>

@@ -51,9 +51,8 @@ export const AvatarMenu = () => {
           as="button"
           className="transition-transform"
           color="secondary"
-          name="Jason Hughes"
           size="sm"
-          src={`https://api.multiavatar.com/${selectedAccount}.png`}
+          src={`https://api.multiavatar.com/${selectedAccount.toLocaleLowerCase()}.png`}
         />
       </DropdownTrigger>
       <DropdownMenu

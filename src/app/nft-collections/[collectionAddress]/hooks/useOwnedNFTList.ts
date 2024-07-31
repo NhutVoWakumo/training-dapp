@@ -2,6 +2,7 @@ import { IChainData, OpenseaNFTWithoutTrait } from "@/app/interfaces";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { getOpenseaNFTsByAccount } from "../utils";
+import { useLoadMoreList } from "@/app/hooks";
 
 interface UseOwnedNFTListProps {
   collectionSlug: string;
@@ -14,18 +15,14 @@ export const useOwnedNFTList = ({
   collectionSlug,
   currentChainData,
 }: UseOwnedNFTListProps) => {
-  const [currentCursor, setCurrentCursor] = useState<string>();
-  const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [ownedNFTList, setOwnedNFTList] = useState<OpenseaNFTWithoutTrait[]>(
-    [],
-  );
+  const {
+    canLoadMore,
+    cursor: currentCursor,
+    list: ownedNFTList,
+    resetProps: resetList,
+    setProps,
+  } = useLoadMoreList<OpenseaNFTWithoutTrait>();
   const [loading, setLoading] = useState<boolean>(false);
-
-  const resetList = useCallback(() => {
-    setCanLoadMore(true);
-    setCurrentCursor(undefined);
-    setOwnedNFTList([]);
-  }, []);
 
   const getOwnedNFT = useCallback(async () => {
     if (!currentChainData || !collectionSlug || !accountAddress) return;
@@ -41,15 +38,19 @@ export const useOwnedNFTList = ({
 
       const { next, nfts } = data;
 
-      setCurrentCursor(next);
-      setCanLoadMore(!!next);
-      setOwnedNFTList((prev) => [...prev, ...nfts]);
+      setProps(nfts, next);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, [accountAddress, currentChainData, currentCursor, collectionSlug]);
+  }, [
+    currentChainData,
+    collectionSlug,
+    accountAddress,
+    currentCursor,
+    setProps,
+  ]);
 
   useEffect(() => {
     resetList();

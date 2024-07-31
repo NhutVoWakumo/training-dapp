@@ -64,8 +64,6 @@ export const TransferNFT = ({
     )
       return;
 
-    console.log(accountAddress);
-
     setLocalLoading(true);
     try {
       const { to, tokenId, amount } = await form.validateFields();

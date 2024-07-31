@@ -9,6 +9,7 @@ import {
 
 import { GiCardPick } from "react-icons/gi";
 import Link from "next/link";
+import { LoadMoreButton } from "@/app/components";
 import { OpenseaNFTWithoutTrait } from "@/app/interfaces";
 import React from "react";
 
@@ -40,6 +41,7 @@ export const NFTList = ({
         )}
       </div>
     );
+
   return (
     <div>
       <div className="grid gap-5 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
@@ -89,11 +91,11 @@ export const NFTList = ({
         ))}
       </div>
       {canLoadMore ? (
-        <div className="my-5 flex justify-center">
-          <Button isLoading={isLoading} onClick={onLoadMore}>
-            Load more
-          </Button>
-        </div>
+        <LoadMoreButton
+          className="my-5"
+          isLoading={isLoading}
+          onClick={onLoadMore}
+        />
       ) : null}
     </div>
   );

@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { NFTList } from "./NFTList";
 import { getOpenseaNFTsByContract } from "../../utils";
+import { useLoadMoreList } from "@/app/hooks";
 
 interface AllNFTListProps {
   slug: string;
@@ -19,16 +20,14 @@ export const AllNFTList = ({
   slug,
   nftImageFallback,
 }: AllNFTListProps) => {
-  const [currentCursor, setCurrentCursor] = useState<string>();
-  const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [allNFTList, setAllNFTList] = useState<OpenseaNFTWithoutTrait[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
-  const resetList = useCallback(() => {
-    setCanLoadMore(true);
-    setCurrentCursor(undefined);
-    setAllNFTList([]);
-  }, []);
+  const {
+    canLoadMore,
+    cursor,
+    list: allNFTList,
+    resetProps: resetList,
+    setProps,
+  } = useLoadMoreList<OpenseaNFTWithoutTrait>();
 
   const getAllNFT = useCallback(async () => {
     if (!chainData || !slug || !canLoadMore) return;
@@ -38,20 +37,18 @@ export const AllNFTList = ({
       const { data } = await getOpenseaNFTsByContract(
         collectionAddress,
         chainData,
-        currentCursor,
+        cursor,
       );
 
       const { next, nfts } = data;
 
-      setCurrentCursor(next);
-      setCanLoadMore(!!next);
-      setAllNFTList((prev) => [...prev, ...nfts]);
+      setProps(nfts, next);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, [canLoadMore, chainData, collectionAddress, currentCursor, slug]);
+  }, [canLoadMore, chainData, collectionAddress, cursor, setProps, slug]);
 
   useEffect(() => {
     resetList();

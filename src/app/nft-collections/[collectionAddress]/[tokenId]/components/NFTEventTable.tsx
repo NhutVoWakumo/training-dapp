@@ -1,15 +1,4 @@
-import {
-  Button,
-  Link,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-  Tooltip,
-} from "@nextui-org/react";
+import { Button, Link, Tooltip } from "@nextui-org/react";
 import { IChainData, OpenseaAssetEvent } from "@/app/interfaces";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -21,9 +10,10 @@ import {
 } from "@/app/utils";
 
 import { BiLinkExternal } from "react-icons/bi";
-import { GiOpenTreasureChest } from "react-icons/gi";
+import { CustomTable } from "@/app/components";
 import { columns } from "../constants";
 import { getOpenseaNFTEvent } from "../../utils";
+import { useLoadMoreList } from "@/app/hooks";
 
 interface NFTEventTableProps {
   chainData: IChainData;
@@ -36,16 +26,14 @@ export const NFTEventTable = ({
   collectionAddress,
   tokenId,
 }: NFTEventTableProps) => {
-  const [nftEventList, setNFTEventList] = useState<OpenseaAssetEvent[]>([]);
-  const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [cursor, setCursor] = useState<string>();
   const [localLoading, setLocalLoading] = useState<boolean>(false);
-
-  const resetTable = useCallback(() => {
-    setCanLoadMore(true);
-    setCursor(undefined);
-    setNFTEventList([]);
-  }, []);
+  const {
+    canLoadMore,
+    cursor,
+    list: nftEventList,
+    resetProps: resetTable,
+    setProps,
+  } = useLoadMoreList<OpenseaAssetEvent>();
 
   const renderCell = useCallback(
     (event: OpenseaAssetEvent, columnKey: string) => {
@@ -92,16 +80,13 @@ export const NFTEventTable = ({
         cursor,
       );
 
-      setCursor(data.next);
-      setCanLoadMore(!!data.next);
-
-      setNFTEventList((prev) => [...prev, ...data.asset_events]);
+      setProps(data.asset_events, data.next);
     } catch (error) {
       console.error(error);
     } finally {
       setLocalLoading(false);
     }
-  }, [canLoadMore, chainData, collectionAddress, cursor, tokenId]);
+  }, [canLoadMore, chainData, collectionAddress, cursor, setProps, tokenId]);
 
   useEffect(() => {
     resetTable();
@@ -109,11 +94,14 @@ export const NFTEventTable = ({
   }, []);
 
   return (
-    <div>
-      <Table
-        aria-label="NFT Collections Table"
-        removeWrapper
-        bottomContent={
+    <CustomTable<OpenseaAssetEvent>
+      data={nftEventList}
+      columns={columns}
+      renderCell={renderCell}
+      tableProps={{
+        "aria-label": "NFT Collections Table",
+        removeWrapper: true,
+        bottomContent:
           canLoadMore && !localLoading ? (
             <div className="flex w-full justify-center">
               <Button
@@ -124,45 +112,17 @@ export const NFTEventTable = ({
                 Load more
               </Button>
             </div>
-          ) : null
-        }
-        classNames={{
+          ) : null,
+        classNames: {
           base: "max-h-[520px] md:overflow-x-hidden overflow-x-scroll",
-        }}
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn key={column.key} align="center">
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={nftEventList}
-          isLoading={localLoading}
-          loadingContent={
-            <Spinner color="warning" label="Finding treasure..." />
-          }
-          emptyContent={
-            <div className="flex w-full flex-col items-center justify-center gap-5">
-              <GiOpenTreasureChest size={70} />
-              <p className="text-gray text-lg font-medium">
-                Let&apos;s make your treasure full
-              </p>
-            </div>
-          }
-        >
-          {(item) => (
-            <TableRow
-              key={`${item.transaction}-${item.event_timestamp}-${item.from_address}`}
-            >
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey as string)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+        },
+      }}
+      tableColumnProps={{
+        align: "center",
+      }}
+      tableBodyProps={{
+        isLoading: localLoading,
+      }}
+    />
   );
 };

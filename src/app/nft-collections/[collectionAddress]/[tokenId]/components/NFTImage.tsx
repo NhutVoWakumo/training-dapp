@@ -52,6 +52,7 @@ export const NFTImage = ({
       </CardHeader>
       {imgSrc ? (
         <Image
+          isLoading={isLoading}
           src={imgSrc}
           alt={"nft image"}
           className="aspect-square w-[100vw] rounded-none bg-black object-contain pb-3 lg:w-[40vw]"
