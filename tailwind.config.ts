@@ -40,10 +40,24 @@ const config: Config = {
             borderColor: "white",
           },
         },
+        "scrolling-banner": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-50% - var(--gap)/2))" },
+        },
+        "scrolling-banner-vertical": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(calc(-50% - var(--gap)/2))" },
+        },
       },
       animation: {
         gradient: "gradient 6s linear infinite",
         typing: "typing 2s steps(20) infinite alternate, blink .8s infinite",
+        "scrolling-banner": "scrolling-banner var(--duration) linear infinite",
+        "scrolling-banner-vertical":
+          "scrolling-banner-vertical var(--duration) linear infinite",
+      },
+      colors: {
+        "light-sky": "#8fc7ff",
       },
     },
     screens: {

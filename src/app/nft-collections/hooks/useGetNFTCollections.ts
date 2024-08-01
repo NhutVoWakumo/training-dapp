@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLoadMoreList, useWalletProvider } from "@/app/hooks";
 
 import { INFTCollection } from "@/app/interfaces";
 import Moralis from "moralis";
 import { formatChainAsHex } from "@/app/utils";
-import { useWalletProvider } from "@/app/hooks";
 
 interface UseGetNFTCollectionsProps {
   pageLimit?: number;
@@ -13,21 +13,19 @@ export const useGetNFTCollections = ({
   pageLimit = 10,
 }: UseGetNFTCollectionsProps) => {
   const [localLoading, setLocalLoading] = useState<boolean>(false);
-  const [collectionList, setCollectionList] = useState<INFTCollection[]>([]);
-  const [currentCursor, setCurrentCursor] = useState<string>();
-  const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>();
   const { chainId, selectedAccount, triggerLoading, processErrorMessage } =
     useWalletProvider();
-
-  const resetNFTList = useCallback(() => {
-    setCollectionList([]);
-    setCurrentCursor(undefined);
-    setCanLoadMore(true);
-  }, []);
+  const {
+    canLoadMore,
+    cursor: currentCursor,
+    list: collectionList,
+    resetProps: resetNFTList,
+    setProps,
+    manualSetCanLoadMore,
+  } = useLoadMoreList<INFTCollection>();
 
   const getNFTCollectionList = useCallback(async () => {
-    if (!chainId || !selectedAccount || !canLoadMore) return;
+    if (!chainId || !selectedAccount) return;
 
     setLocalLoading(true);
     triggerLoading(true);
@@ -37,45 +35,42 @@ export const useGetNFTCollections = ({
         chain: formatChainAsHex(Number(chainId)),
         tokenCounts: true,
         address: selectedAccount,
-        cursor: currentCursor,
         limit: pageLimit,
+        cursor: currentCursor,
       });
 
       const { raw } = response;
-      const { result, cursor, total } = raw;
+      const { result, cursor } = raw;
 
-      setCanLoadMore(!!cursor);
-      setCurrentCursor(cursor);
-      setTotalCount(total);
+      const newCollectionList = result.map((item) => ({
+        tokenAddress: item.token_address,
+        contractType: item.contract_type,
+        name: item.name,
+        symbol: item.symbol,
+        ownedNFTCount: item?.count ?? 0,
+        collectionLogo: item?.collection_logo,
+        collectionBannerImage: item?.collection_banner_image,
+      }));
 
-      result.forEach((item) => {
-        setCollectionList((prevList) => [
-          ...prevList,
-          {
-            tokenAddress: item.token_address,
-            contractType: item.contract_type,
-            name: item.name,
-            symbol: item.symbol,
-            ownedNFTCount: item?.count ?? 0,
-            collectionLogo: item?.collection_logo,
-            collectionBannerImage: item?.collection_banner_image,
-          },
-        ]);
-      });
+      setProps(newCollectionList, cursor);
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
+
+      if (!collectionList.length) manualSetCanLoadMore(false);
     } finally {
       setLocalLoading(false);
       triggerLoading(false);
     }
   }, [
-    canLoadMore,
     chainId,
+    collectionList,
     currentCursor,
+    manualSetCanLoadMore,
     pageLimit,
     processErrorMessage,
     selectedAccount,
+    setProps,
     triggerLoading,
   ]);
 
@@ -89,6 +84,5 @@ export const useGetNFTCollections = ({
     getNFTCollectionList,
     loading: localLoading,
     canLoadMore,
-    totalCount,
   };
 };

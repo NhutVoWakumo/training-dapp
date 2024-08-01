@@ -12,6 +12,7 @@ import {
 import React, { useCallback } from "react";
 
 import { AvatarMenu } from "./AvatarMenu";
+import { CoinBalanceAndChain } from "./CoinBalanceAndChain";
 import { ConnectButton } from "./ConnectButton";
 import { GiAlienFire } from "react-icons/gi";
 import Link from "next/link";
@@ -44,12 +45,10 @@ export const Navbar = () => {
           className="sm:hidden"
         />
         <NavbarBrand>
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <GiAlienFire size={28} />
-            <Link href="/" className="font-bold text-inherit">
-              HEHE
-            </Link>
-          </div>
+            <p className="hidden font-bold text-inherit md:block">HEHE</p>
+          </Link>
         </NavbarBrand>
       </NavbarContent>
 
@@ -71,7 +70,10 @@ export const Navbar = () => {
       </NavbarContent>
       <NavbarContent justify="end">
         {!!selectedWallet && !!selectedAccount ? (
-          <AvatarMenu />
+          <div className="flex items-center gap-3">
+            <CoinBalanceAndChain />
+            <AvatarMenu />
+          </div>
         ) : (
           <NavbarItem>
             <ConnectButton />

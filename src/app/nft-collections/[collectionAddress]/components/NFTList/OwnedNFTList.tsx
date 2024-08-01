@@ -1,8 +1,7 @@
-import { IChainData, OpenseaNFT } from "@/app/interfaces";
-import React, { useCallback, useEffect, useState } from "react";
-
+import { IChainData } from "@/app/interfaces";
 import { NFTList } from "./NFTList";
-import { getOpenseaNFTsByAccount } from "../../utils";
+import React from "react";
+import { useOwnedNFTList } from "../../hooks/useOwnedNFTList";
 
 interface OwnedNFTListProps {
   accountAddress: string;
@@ -17,53 +16,19 @@ export const OwnedNFTList = ({
   slug,
   chainData,
 }: OwnedNFTListProps) => {
-  const [currentCursor, setCurrentCursor] = useState<string>();
-  const [canLoadMore, setCanLoadMore] = useState<boolean>(true);
-  const [ownedNFTList, setOwnedNFTList] = useState<OpenseaNFT[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const resetList = useCallback(() => {
-    setCanLoadMore(true);
-    setCurrentCursor(undefined);
-    setOwnedNFTList([]);
-  }, []);
-
-  const getOwnedNFT = useCallback(async () => {
-    if (!chainData || !slug || !canLoadMore || !accountAddress) return;
-    setLoading(true);
-
-    try {
-      const { data } = await getOpenseaNFTsByAccount(
-        accountAddress,
-        chainData,
-        slug,
-        currentCursor,
-      );
-
-      const { next, nfts } = data;
-
-      setCurrentCursor(next);
-      setCanLoadMore(!!next);
-      setOwnedNFTList((prev) => [...prev, ...nfts]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [accountAddress, canLoadMore, chainData, currentCursor, slug]);
-
-  useEffect(() => {
-    resetList();
-    getOwnedNFT();
-  }, []);
+  const { canLoadMore, isLoading, nftList, onLoadMore } = useOwnedNFTList({
+    collectionSlug: slug,
+    currentChainData: chainData as IChainData,
+    accountAddress,
+  });
 
   return (
     <div>
       <NFTList
-        dataList={ownedNFTList}
-        isLoading={loading}
+        dataList={nftList}
+        isLoading={isLoading}
         canLoadMore={canLoadMore}
-        onLoadMore={() => getOwnedNFT()}
+        onLoadMore={onLoadMore}
         nftImageFallback={nftImageFallback}
       />
     </div>

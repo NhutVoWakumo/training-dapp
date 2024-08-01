@@ -1,7 +1,9 @@
 import {
   IChainData,
+  OpenseaAssetEventResponse,
   OpenseaCollection,
   OpenseaCollectionContract,
+  OpenseaNFT,
   OpenseaNFTListResponse,
 } from "@/app/interfaces";
 
@@ -67,6 +69,41 @@ export const getOpenseaNFTsByContract = async (
         "x-api-key": process.env.NEXT_PUBLIC_OPENSEA_KEY,
       },
       params: {
+        next,
+      },
+    },
+  );
+};
+
+export const getOpenseaNFTData = async (
+  collectionAddress: string,
+  chain: IChainData,
+  tokenId: string,
+) => {
+  return axios.get<OpenseaNFT>(
+    `${chain.openseaUrl}/api/v2/chain/${chain.openseaName}/contract/${collectionAddress}/nfts/${tokenId}`,
+    {
+      headers: {
+        "x-api-key": process.env.NEXT_PUBLIC_OPENSEA_KEY,
+      },
+    },
+  );
+};
+
+export const getOpenseaNFTEvent = async (
+  collectionAddress: string,
+  chain: IChainData,
+  tokenId: string,
+  next?: string,
+) => {
+  return axios.get<OpenseaAssetEventResponse>(
+    `${chain.openseaUrl}/api/v2/events/chain/${chain.openseaName}/contract/${collectionAddress}/nfts/${tokenId}`,
+    {
+      headers: {
+        "x-api-key": process.env.NEXT_PUBLIC_OPENSEA_KEY,
+      },
+      params: {
+        event_type: "all",
         next,
       },
     },

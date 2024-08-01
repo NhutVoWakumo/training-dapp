@@ -1,86 +1,43 @@
 "use client";
 
 import { CollectionContent, CollectionHeader } from "./components";
-import { IChainData, OpenseaCollection } from "@/app/interfaces";
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  getChainData,
-  getOpenseaCollectionContract,
-  getOpenseaCollectionMetaData,
-} from "./utils";
 
 import { EmptyPage } from "@/app/components";
-import { useWalletProvider } from "@/app/hooks";
+import React from "react";
+import { RedirectToTableModal } from "../components";
+import { useGetCollectionData } from "../hooks";
+import { useRouter } from "next/navigation";
 
-const CollectionDetail = ({
-  params,
-}: {
-  params: { collectionAddress: string };
-}) => {
+export interface CollectionDetailProps {
+  params: CollectionDetailParams;
+}
+
+interface CollectionDetailParams {
+  collectionAddress: string;
+}
+
+const CollectionDetail = ({ params }: CollectionDetailProps) => {
   const { collectionAddress: address } = params;
-  const { chainId } = useWalletProvider();
+  const router = useRouter();
 
-  const [currentOpenseaChain, setCurrentOpenseaChain] = useState<IChainData>();
-  const [collectionData, setCollectionData] = useState<OpenseaCollection>();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [currentSlug, setCurrentSlug] = useState<string>("");
+  const {
+    currentSlug,
+    collectionData,
+    currentOpenseaChain,
+    isNotCorrectChainId,
+    loading,
+  } = useGetCollectionData({ collectionAddress: address });
 
-  const getCollectionSlug = useCallback(async () => {
-    if (!currentOpenseaChain) return;
-    try {
-      const { data } = await getOpenseaCollectionContract(
-        currentOpenseaChain,
-        address,
-      );
-      const slug = data.collection;
-
-      if (!slug) return "";
-
-      setCurrentSlug(slug);
-
-      return slug;
-    } catch (error) {
-      console.error(error);
-    }
-  }, [address, currentOpenseaChain]);
-
-  const getCollectionMetaData = useCallback(async () => {
-    if (!currentOpenseaChain) return;
-
-    setLoading(true);
-
-    try {
-      const slug = await getCollectionSlug();
-      if (!slug) return;
-
-      const { data } = await getOpenseaCollectionMetaData(
-        currentOpenseaChain,
-        slug,
-      );
-
-      setCollectionData(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentOpenseaChain, getCollectionSlug]);
-
-  useEffect(() => {
-    if (!chainId) return;
-
-    const currentChainData = getChainData(chainId);
-
-    if (currentChainData) setCurrentOpenseaChain(currentChainData);
-  }, [chainId]);
-
-  useEffect(() => {
-    getCollectionMetaData();
-  }, [getCollectionMetaData]);
+  if (loading) return <EmptyPage />;
 
   return (
     <div>
-      {collectionData ? (
+      {isNotCorrectChainId || !collectionData ? (
+        <RedirectToTableModal
+          isOpen={isNotCorrectChainId}
+          onConfirm={() => router.push("/nft-collections")}
+        />
+      ) : (
         <div className="flex flex-col gap-3">
           <CollectionHeader
             address={address}
@@ -94,8 +51,6 @@ const CollectionDetail = ({
             chainData={currentOpenseaChain}
           />
         </div>
-      ) : (
-        <EmptyPage />
       )}
     </div>
   );

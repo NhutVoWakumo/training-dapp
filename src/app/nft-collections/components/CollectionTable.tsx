@@ -1,20 +1,9 @@
 "use client";
 
-import {
-  Button,
-  Chip,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-  User,
-} from "@nextui-org/react";
+import { Chip, User } from "@nextui-org/react";
+import { CustomTable, LoadMoreButton } from "@/app/components";
 import React, { useCallback } from "react";
 
-import { GiOpenTreasureChest } from "react-icons/gi";
 import { INFTCollection } from "@/app/interfaces";
 import Jazzicon from "react-jazzicon/dist/Jazzicon";
 import Link from "next/link";
@@ -78,62 +67,28 @@ export const CollectionTable = () => {
   );
 
   return (
-    <div>
-      <Table
-        aria-label="NFT Collections Table"
-        removeWrapper
-        bottomContent={
+    <CustomTable<INFTCollection>
+      data={collectionList}
+      renderCell={renderCell}
+      columns={columns}
+      tableProps={{
+        "aria-label": "NFT Collections Table",
+        removeWrapper: true,
+        bottomContent:
           canLoadMore && !loading ? (
-            <div className="flex w-full justify-center">
-              <Button
-                isLoading={loading}
-                variant="flat"
-                onClick={getNFTCollectionList}
-              >
-                Load more
-              </Button>
-            </div>
-          ) : null
-        }
-        classNames={{
+            <LoadMoreButton
+              isLoading={loading}
+              onClick={getNFTCollectionList}
+            />
+          ) : null,
+
+        classNames: {
           base: "max-h-[520px] md:overflow-x-hidden overflow-x-scroll",
-          table: "min-h-[400px]",
-        }}
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn
-              key={column.key}
-              align={column.key === "name" ? "start" : "center"}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={collectionList}
-          isLoading={loading}
-          loadingContent={
-            <Spinner color="warning" label="Finding treasure..." />
-          }
-          emptyContent={
-            <div className="flex w-full flex-col items-center justify-center gap-5">
-              <GiOpenTreasureChest size={70} />
-              <p className="text-gray text-lg font-medium">
-                Let&apos;s make your treasure full
-              </p>
-            </div>
-          }
-        >
-          {(item) => (
-            <TableRow key={item.tokenAddress}>
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey as string)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+        },
+      }}
+      tableBodyProps={{
+        isLoading: loading,
+      }}
+    />
   );
 };

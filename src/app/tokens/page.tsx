@@ -1,5 +1,10 @@
+import { Metadata } from "next";
 import React from "react";
 import { TokenTable } from "./components";
+
+export const metadata: Metadata = {
+  title: "Tokens",
+};
 
 const Tokens = () => {
   return (

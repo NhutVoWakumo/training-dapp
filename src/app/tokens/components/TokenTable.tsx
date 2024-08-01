@@ -1,17 +1,11 @@
 "use client";
 
 import {
-  Button,
-  Pagination,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-  useDisclosure,
-} from "@nextui-org/react";
+  AnimatedGradientText,
+  CustomPagination,
+  CustomTable,
+  ReloadButton,
+} from "@/app/components";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   TokenActionCell,
@@ -19,17 +13,17 @@ import {
   TokenDataCell,
 } from "./TokenTableCell";
 
-import { BiRefresh } from "react-icons/bi";
-import { GiOpenTreasureChest } from "react-icons/gi";
 import { ITokenData } from "../interfaces";
 import { TransferModal } from "@/app/components/Transfer/TransferModal";
 import { columns } from "../constants";
+import { useDisclosure } from "@nextui-org/react";
 import { useERC20Tokens } from "../hooks";
 import { useWalletProvider } from "@/app/hooks";
 
 export const TokenTable = () => {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-  const { selectedAccount, chainId, globalLoading } = useWalletProvider();
+  const { selectedAccount, chainId, globalLoading, processErrorMessage } =
+    useWalletProvider();
   const {
     tokenList,
     importTokenToWallet,
@@ -43,18 +37,13 @@ export const TokenTable = () => {
     chainId,
     account: selectedAccount ?? "",
   });
+  const ROW_PER_PAGE = 4;
   const [page, setPage] = useState<number>(1);
   const [currentToken, setCurrentToken] = useState<ITokenData>();
-  const rowsPerPage = 4;
-
-  const pages = useMemo(
-    () => Math.ceil(Object.values(tokenList).length / rowsPerPage),
-    [tokenList],
-  );
 
   const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    const start = (page - 1) * ROW_PER_PAGE;
+    const end = start + ROW_PER_PAGE;
 
     return Object.values(tokenList).slice(start, end);
   }, [page, tokenList]);
@@ -97,85 +86,61 @@ export const TokenTable = () => {
           await refetchAccountBalance(selectedAccount, currentToken);
       }
       onClose();
+      form.resetFields();
     } catch (error) {
       console.error(error);
+      processErrorMessage(error);
     }
   }, [
     currentToken,
     form,
     getTransactionReceipt,
     onClose,
+    processErrorMessage,
     refetchAccountBalance,
     selectedAccount,
     transferToken,
   ]);
 
   return (
-    <div className="my-5 flex flex-col gap-5">
+    <div className="my-5 flex flex-col">
       <div className="mb-5 flex items-center justify-between">
-        <p className="animate-gradient bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 bg-clip-text text-3xl font-semibold text-transparent">
-          ERC20 Tokens Table
-        </p>
-        <Button
+        <AnimatedGradientText>ERC20 Tokens Table</AnimatedGradientText>
+        <ReloadButton
           size="sm"
-          isIconOnly
           isLoading={loading}
-          onClick={() => getTokenList(selectedAccount as string)}
           color="warning"
-        >
-          <BiRefresh size={28} />
-        </Button>
+          isDisabled={!selectedAccount}
+          onReload={() => getTokenList(selectedAccount as string)}
+        />
       </div>
-      <Table
-        aria-label="ERC20 Tokens"
-        removeWrapper
-        bottomContent={
-          <div className="flex w-full justify-center">
-            {!!items.length && (
-              <Pagination
-                isCompact
-                showControls
-                showShadow
-                color="secondary"
-                page={page}
-                total={pages}
-                onChange={(page) => setPage(page)}
-              />
-            )}
-          </div>
-        }
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn key={column.key} align={"start"}>
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={items}
-          isLoading={loading}
-          loadingContent={
-            <Spinner color="warning" label="Finding treasure..." />
-          }
-          emptyContent={
-            <div className="flex w-full flex-col items-center justify-center gap-5">
-              <GiOpenTreasureChest size={70} />
-              <p className="text-gray text-lg font-medium">
-                Let&apos;s make your treasure full
-              </p>
-            </div>
-          }
-        >
-          {items.map((item) => (
-            <TableRow key={item.address} className="my-2 p-2">
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey as string)}</TableCell>
+      <CustomTable<ITokenData>
+        data={items}
+        columns={columns}
+        renderCell={renderCell}
+        tableProps={{
+          "aria-label": "ERC20 Tokens",
+          removeWrapper: true,
+          bottomContent: (
+            <div className="flex w-full justify-center">
+              {!!items.length && (
+                <CustomPagination
+                  dataLength={Object.values(tokenList).length}
+                  rowsPerPage={ROW_PER_PAGE}
+                  onChange={setPage}
+                />
               )}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            </div>
+          ),
+        }}
+        tableColumnProps={{ align: "start" }}
+        tableBodyProps={{
+          isLoading: loading,
+        }}
+        tableRowProps={{
+          className: "my-2 p-2",
+        }}
+      />
       <TransferModal
         isOpen={isOpen}
         onOpenChange={onOpenChange}

@@ -1,6 +1,8 @@
+import React, { useCallback } from "react";
+
 import { ITokenData } from "../../interfaces";
 import Jazzicon from "react-jazzicon/dist/Jazzicon";
-import React from "react";
+import { SymbolLogo } from "@api3/logos";
 import { User } from "@nextui-org/react";
 import { formatAddress } from "@/app/utils";
 import { jsNumberForAddress } from "react-jazzicon";
@@ -10,6 +12,14 @@ interface TokenDataCellProps {
 }
 
 export const TokenDataCell = ({ token }: TokenDataCellProps) => {
+  const getTokenLogoSrc = useCallback((tokenSymbol: string) => {
+    const thirdPartyLogo = SymbolLogo(tokenSymbol.toUpperCase()) as any;
+    const logoSrc = thirdPartyLogo.src as string;
+
+    if (logoSrc.includes("Placeholder")) return "";
+
+    return logoSrc;
+  }, []);
   return (
     <div>
       <User
@@ -23,7 +33,7 @@ export const TokenDataCell = ({ token }: TokenDataCellProps) => {
         avatarProps={{
           showFallback: true,
           radius: "full",
-          src: token.logoUrl,
+          src: getTokenLogoSrc(token.symbol),
           color: "warning",
           isBordered: true,
           fallback: (

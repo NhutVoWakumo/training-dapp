@@ -1,12 +1,18 @@
+import { AnimatedGradientText } from "../components";
 import { CollectionTable } from "./components";
+import { Metadata } from "next";
 import React from "react";
+
+export const metadata: Metadata = {
+  title: "NFT Collections",
+};
 
 const NFTCollections = () => {
   return (
-    <div>
-      <p className="text-purple-yellow-gradient my-5 animate-gradient px-3 text-3xl font-semibold text-transparent md:px-10">
+    <div className="px-3 md:px-10">
+      <AnimatedGradientText className="my-5">
         NFT Collections
-      </p>
+      </AnimatedGradientText>
       <CollectionTable />
     </div>
   );

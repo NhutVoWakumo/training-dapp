@@ -1,14 +1,19 @@
 "use client";
 
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, InfuraProvider, ethers } from "ethers";
 import {
   PropsWithChildren,
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
-import { capitalizeFirstLetter, formatRoundEther } from "../utils";
+import {
+  capitalizeFirstLetter,
+  formatChainAsHex,
+  formatRoundEther,
+} from "../utils";
 import {
   useDisconnect,
   useWalletInfo,
@@ -16,9 +21,10 @@ import {
   useWeb3ModalProvider,
 } from "@web3modal/ethers/react";
 
-import { MESSAGE_DURATION } from "../constants";
+import { IChainData } from "../interfaces";
 import Moralis from "moralis";
-import { message } from "antd";
+import { chainData } from "../constants";
+import toast from "react-hot-toast";
 
 type SelectedAccountByWallet = Record<string, string | null>;
 
@@ -29,8 +35,9 @@ interface WalletProviderContext {
   errorMessage: string | null;
   chainId: string;
   globalLoading: boolean;
-  currentProvider: any;
+  currentProvider: BrowserProvider | undefined;
   currentBalance: string;
+  infuraProvider?: InfuraProvider;
 
   connectInstalledWallet: (walletUuid: string) => Promise<void>;
   disconnectWallet: () => void;
@@ -38,6 +45,7 @@ interface WalletProviderContext {
   clearError: () => void;
   processErrorMessage: (error: any) => void;
   getNativeCoinBalance: (address: string) => Promise<string>;
+  switchChain: (chain: IChainData) => Promise<void>;
   getChainId: () => Promise<string>;
 }
 
@@ -57,14 +65,13 @@ const initialValue: WalletProviderContext = {
   currentProvider: undefined,
   currentBalance: "",
 
-  connectInstalledWallet: async (id: string) => {},
+  connectInstalledWallet: async () => {},
   disconnectWallet: () => {},
-  triggerLoading: (loading: boolean) => {},
+  triggerLoading: () => {},
   clearError: () => {},
-  processErrorMessage: (error: any) => {},
-  getNativeCoinBalance: async (address: string) => {
-    return "";
-  },
+  processErrorMessage: () => {},
+  getNativeCoinBalance: async () => "",
+  switchChain: async () => {},
   getChainId: async () => "",
 };
 
@@ -93,9 +100,21 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [currentWallet, setCurrentWallet] =
     useState<EIP6963ProviderDetail | null>(null);
   const [currentBalance, setCurrentBalance] = useState<string>("0.0");
+  const [currentInfuraChainName, setCurrentInfuraChainName] =
+    useState<string>();
+  const [isActive, setIsActive] = useState<boolean>(
+    isConnected || !!currentAccount || !!currentProvider,
+  );
 
   const clearError = () => setErrorMessage("");
   const triggerLoading = (value: boolean) => setLoading(value);
+
+  const infuraProvider = useMemo(() => {
+    return new InfuraProvider(
+      currentInfuraChainName,
+      process.env.NEXT_PUBLIC_INFURA_API_KEY,
+    );
+  }, [currentInfuraChainName]);
 
   const processErrorMessage = useCallback((error: any) => {
     const walletError: WalletError = error as WalletError;
@@ -104,10 +123,8 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (!curentMessage) return;
 
     setErrorMessage(`${curentMessage}`);
-    message.open({
-      content: `${capitalizeFirstLetter(curentMessage)}`,
-      duration: MESSAGE_DURATION,
-    });
+
+    toast.error(`${capitalizeFirstLetter(curentMessage)}`);
   }, []);
 
   const getChainId = useCallback(async () => {
@@ -160,10 +177,11 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 
   const resetApp = useCallback(() => {
-    setCurrentAccount("");
-    setCurrentProvider(undefined);
-    setCurrentWallet(null);
-    setSelectedChain("");
+    setIsActive(() => false);
+    setCurrentAccount(() => "");
+    setCurrentProvider(() => undefined);
+    setCurrentWallet(() => null);
+    setSelectedChain(() => "");
   }, []);
 
   const connectInstalledWallet = useCallback(
@@ -175,6 +193,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         })) as string[];
 
         if (accounts?.[0]) {
+          setIsActive(true);
           setSelectedWalletRdns(wallet.info.rdns);
           setSelectedAccountByWalletRdns((currentAccounts) => ({
             ...currentAccounts,
@@ -230,11 +249,48 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     selectedWalletRdns,
   ]);
 
+  const switchChain = useCallback(
+    async (chain: IChainData) => {
+      if (!currentWallet?.provider) return;
+
+      triggerLoading(true);
+      try {
+        console.log(chain.chainId);
+        await currentWallet.provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: formatChainAsHex(chain.chainId) }],
+        });
+      } catch (switchError) {
+        try {
+          await currentWallet.provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: formatChainAsHex(chain.chainId),
+                chainName: chain.name,
+                rpcUrls: chain.rpc,
+                nativeCurrency: chain.nativeCurrency,
+              },
+            ],
+          });
+        } catch (addError) {
+          console.error(addError);
+          processErrorMessage(addError);
+        }
+      } finally {
+        triggerLoading(false);
+        await getNativeCoinBalance(currentAccount as string);
+      }
+    },
+    [currentAccount, currentWallet, getNativeCoinBalance, processErrorMessage],
+  );
+
   useEffect(() => {
     if (walletProvider) {
       const ethersProvider = new ethers.BrowserProvider(walletProvider);
 
       setCurrentProvider(ethersProvider);
+      setIsActive(true);
     }
   }, [isConnected, walletProvider]);
 
@@ -261,15 +317,21 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [isConnected, resetApp]);
 
   useEffect(() => {
-    if (currentAccount) {
-      getNativeCoinBalance(currentAccount);
+    if (currentAccount && isActive) {
       getChainId();
     }
-  }, [currentAccount, chainId, getNativeCoinBalance, getChainId]);
+  }, [currentAccount, getChainId, isActive]);
+
+  useEffect(() => {
+    if (currentAccount && isActive) {
+      getNativeCoinBalance(currentAccount);
+    }
+  }, [currentAccount, selectedChain, getNativeCoinBalance, isActive]);
 
   useEffect(() => {
     if (selectedWalletRdns && selectedAccountByWalletRdns[selectedWalletRdns]) {
       setCurrentAccount(selectedAccountByWalletRdns[selectedWalletRdns]);
+      setIsActive(true);
     }
   }, [selectedAccountByWalletRdns, selectedWalletRdns]);
 
@@ -364,6 +426,16 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       window.removeEventListener("eip6963:announceProvider", onAnnouncement);
   }, []);
 
+  useEffect(() => {
+    const chain = chainData.find(
+      (item) => item.chainId.toString() === selectedChain,
+    );
+
+    if (!chain || !currentAccount) return;
+
+    setCurrentInfuraChainName(chain.networkName);
+  }, [selectedChain, currentAccount]);
+
   const contextValue: WalletProviderContext = {
     wallets,
     selectedWallet: currentWallet,
@@ -379,7 +451,9 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     clearError,
     processErrorMessage,
     getNativeCoinBalance,
+    switchChain,
     getChainId,
+    infuraProvider,
   };
 
   return (
