@@ -2,13 +2,13 @@
 
 import { Chip, User } from "@nextui-org/react";
 import { CustomTable, LoadMoreButton } from "@/app/components";
+import { EColumnKeys, columns } from "../constants";
 import React, { useCallback } from "react";
 
 import { INFTCollection } from "@/app/interfaces";
 import Jazzicon from "react-jazzicon/dist/Jazzicon";
 import Link from "next/link";
 import { TOKEN_STANDARDS } from "@/app/constants";
-import { columns } from "../constants";
 import { jsNumberForAddress } from "react-jazzicon";
 import { useGetNFTCollections } from "../hooks";
 
@@ -19,7 +19,7 @@ export const CollectionTable = () => {
   const renderCell = useCallback(
     (collection: INFTCollection, columnKey: string) => {
       switch (columnKey) {
-        case "name":
+        case EColumnKeys.NAME:
           return (
             <User
               name={
@@ -44,7 +44,7 @@ export const CollectionTable = () => {
               }}
             />
           );
-        case "type":
+        case EColumnKeys.TYPE:
           return (
             <Chip
               size="sm"
@@ -57,7 +57,7 @@ export const CollectionTable = () => {
               {collection.contractType.toUpperCase()}
             </Chip>
           );
-        case "nft":
+        case EColumnKeys.OWNED_NFTS:
           return <p className="font-semibold">{collection.ownedNFTCount}</p>;
         default:
           return "";
