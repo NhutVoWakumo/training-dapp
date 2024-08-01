@@ -75,7 +75,10 @@ export const useGetCollectionData = ({
   }, [currentOpenseaChain, getCollectionSlug, processErrorMessage]);
 
   useEffect(() => {
-    if (!chainId) return;
+    if (!chainId) {
+      setIsNotCorrectChainId(true);
+      return;
+    }
 
     const currentChainData = getChainData(chainId);
 

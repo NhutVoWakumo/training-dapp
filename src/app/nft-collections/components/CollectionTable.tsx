@@ -11,10 +11,12 @@ import Link from "next/link";
 import { TOKEN_STANDARDS } from "@/app/constants";
 import { jsNumberForAddress } from "react-jazzicon";
 import { useGetNFTCollections } from "../hooks";
+import { useWalletProvider } from "@/app/hooks";
 
 export const CollectionTable = () => {
   const { canLoadMore, collectionList, getNFTCollectionList, loading } =
     useGetNFTCollections({ pageLimit: 5 });
+  const { selectedAccount } = useWalletProvider();
 
   const renderCell = useCallback(
     (collection: INFTCollection, columnKey: string) => {
@@ -75,7 +77,7 @@ export const CollectionTable = () => {
         "aria-label": "NFT Collections Table",
         removeWrapper: true,
         bottomContent:
-          canLoadMore && !loading ? (
+          canLoadMore && !loading && !!selectedAccount ? (
             <LoadMoreButton
               isLoading={loading}
               onClick={getNFTCollectionList}
