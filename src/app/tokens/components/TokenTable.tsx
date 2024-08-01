@@ -6,6 +6,7 @@ import {
   CustomTable,
   ReloadButton,
 } from "@/app/components";
+import { EColumnKeys, columns } from "../constants";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   TokenActionCell,
@@ -15,7 +16,6 @@ import {
 
 import { ITokenData } from "../interfaces";
 import { TransferModal } from "@/app/components/Transfer/TransferModal";
-import { columns } from "../constants";
 import { useDisclosure } from "@nextui-org/react";
 import { useERC20Tokens } from "../hooks";
 import { useWalletProvider } from "@/app/hooks";
@@ -51,13 +51,13 @@ export const TokenTable = () => {
   const renderCell = useCallback(
     (token: ITokenData, columnKey: string) => {
       switch (columnKey) {
-        case "token":
+        case EColumnKeys.TOKEN:
           return <TokenDataCell token={token} />;
 
-        case "balance":
+        case EColumnKeys.BALANCE:
           return <TokenBalanceCell token={token} />;
 
-        case "actions":
+        case EColumnKeys.ACTIONS:
           return (
             <TokenActionCell
               isDisabled={globalLoading}

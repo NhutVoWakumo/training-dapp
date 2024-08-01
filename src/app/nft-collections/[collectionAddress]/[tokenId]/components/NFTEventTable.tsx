@@ -1,4 +1,5 @@
 import { Button, Link, Tooltip } from "@nextui-org/react";
+import { EColumnKeys, columns } from "../constants";
 import { IChainData, OpenseaAssetEvent } from "@/app/interfaces";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -11,7 +12,6 @@ import {
 
 import { BiLinkExternal } from "react-icons/bi";
 import { CustomTable } from "@/app/components";
-import { columns } from "../constants";
 import { getOpenseaNFTEvent } from "../../utils";
 import { useLoadMoreList } from "@/app/hooks";
 
@@ -38,13 +38,13 @@ export const NFTEventTable = ({
   const renderCell = useCallback(
     (event: OpenseaAssetEvent, columnKey: string) => {
       switch (columnKey) {
-        case "type":
+        case EColumnKeys.TYPE:
           return capitalizeFirstLetter(event.event_type);
-        case "from":
+        case EColumnKeys.FROM:
           return event.from_address ? formatAddress(event.from_address) : "-";
-        case "to":
+        case EColumnKeys.TO:
           return event.to_address ? formatAddress(event.to_address) : "-";
-        case "date": {
+        case EColumnKeys.DATE: {
           const date = convertUnixToDate(event.event_timestamp);
           return (
             <Tooltip

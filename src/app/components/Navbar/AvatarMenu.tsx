@@ -3,10 +3,11 @@ import {
   Divider,
   Dropdown,
   DropdownItem,
+  DropdownItemProps,
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/react";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useSignAndVerifyMessage, useWalletProvider } from "@/app/hooks";
 
 import { formatAddress } from "@/app/utils";
@@ -41,6 +42,49 @@ export const AvatarMenu = () => {
     }
   }, [processErrorMessage, signMessage, verifyMessage]);
 
+  const avatarDropdownItems: DropdownItemProps[] = useMemo(
+    () => [
+      {
+        key: "address",
+        className: "h-14 gap-2",
+        children: (
+          <>
+            <p className="font-semibold">Connected with</p>
+            <p className="font-semibold">
+              {formatAddress(selectedAccount as string)}
+            </p>
+          </>
+        ),
+      },
+      {
+        key: "divider",
+        children: <Divider />,
+      },
+      {
+        key: "verify-account",
+        onClick: verifyAccount,
+        isReadOnly: globalLoading,
+        children: "Verify Account",
+      },
+      {
+        key: "copy-address",
+        onClick: () => {
+          navigator.clipboard.writeText(selectedAccount as string);
+          toast.success("Copied to clipboard");
+        },
+        children: "Copy Address",
+      },
+      {
+        key: "disconnect",
+        color: "danger",
+        className: "text-red-500",
+        onClick: disconnectWallet,
+        children: "Disconnect",
+      },
+    ],
+    [selectedAccount, disconnectWallet, globalLoading, verifyAccount],
+  );
+
   if (!selectedAccount) return <></>;
 
   return (
@@ -60,37 +104,11 @@ export const AvatarMenu = () => {
         variant="flat"
         disabledKeys={["address"]}
       >
-        <DropdownItem key="address" className="h-14 gap-2">
-          <p className="font-semibold">Connected with</p>
-          <p className="font-semibold">{formatAddress(selectedAccount)}</p>
-        </DropdownItem>
-        <DropdownItem key="divider">
-          <Divider />
-        </DropdownItem>
-        <DropdownItem
-          key="verify-account"
-          onClick={verifyAccount}
-          isReadOnly={globalLoading}
-        >
-          Verify Account
-        </DropdownItem>
-        <DropdownItem
-          key="copy-address"
-          onClick={() => {
-            navigator.clipboard.writeText(selectedAccount);
-            toast.success("Copied to clipboard");
-          }}
-        >
-          Copy Address
-        </DropdownItem>
-        <DropdownItem
-          key="disconnect"
-          color="danger"
-          className="text-red-500"
-          onClick={disconnectWallet}
-        >
-          Disconnect
-        </DropdownItem>
+        {avatarDropdownItems.map((item) => (
+          <DropdownItem {...item} key={item.key}>
+            {item.children}
+          </DropdownItem>
+        ))}
       </DropdownMenu>
     </Dropdown>
   );

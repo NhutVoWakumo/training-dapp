@@ -1,6 +1,13 @@
-export const columns = [
-  { key: "type", name: "Type" },
-  { key: "from", name: "From" },
-  { key: "to", name: "To" },
-  { key: "date", name: "Date" },
-];
+import { capitalizeFirstLetter } from "@/app/utils";
+
+export enum EColumnKeys {
+  TYPE = "type",
+  FROM = "from",
+  TO = "to",
+  DATE = "date",
+}
+
+export const columns = Object.values(EColumnKeys).map((item) => ({
+  key: item,
+  name: capitalizeFirstLetter(item),
+}));
