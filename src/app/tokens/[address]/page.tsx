@@ -1,6 +1,6 @@
-import { AnimatedGradientText } from "@/app/components";
+import { TokenDetailHeader, TokenTransactionTable } from "./components";
+
 import React from "react";
-import { TokenDetailHeader } from "./components";
 
 export interface TokenDetailProps {
   params: TokenDetailParams;
@@ -15,6 +15,7 @@ const TokenDetail = ({ params }: TokenDetailProps) => {
   return (
     <div className="flex flex-col gap-5">
       <TokenDetailHeader tokenAddress={address} />
+      <TokenTransactionTable tokenAddress={address} />
     </div>
   );
 };

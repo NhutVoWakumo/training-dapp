@@ -4,12 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import { useLoadMoreList, useWalletProvider } from "@/app/hooks";
 
 import Moralis from "moralis";
+import { TokenTransaction } from "@/app/interfaces";
 import { formatChainAsHex } from "@/app/utils";
 
-export const useGetTokenTransactions = (tokenAddress: string) => {
+interface UseGetTokenTransactionsProps {
+  tokenAddress: string;
+  pageLimit?: number;
+}
+
+export const useGetTokenTransactions = ({
+  tokenAddress,
+  pageLimit = 10,
+}: UseGetTokenTransactionsProps) => {
   const { chainId, processErrorMessage, selectedAccount } = useWalletProvider();
   const { canLoadMore, list, manualSetCanLoadMore, resetProps, setProps } =
-    useLoadMoreList();
+    useLoadMoreList<TokenTransaction>();
 
   const [localLoading, setLocalLoading] = useState<boolean>(false);
 
@@ -23,9 +32,10 @@ export const useGetTokenTransactions = (tokenAddress: string) => {
         order: "DESC",
         contractAddresses: [tokenAddress],
         address: selectedAccount,
+        limit: pageLimit,
       });
 
-      setProps(raw.result, raw?.cursor);
+      setProps(raw.result as TokenTransaction[], raw?.cursor);
     } catch (error) {
       console.error(error);
       processErrorMessage(error);
@@ -37,7 +47,7 @@ export const useGetTokenTransactions = (tokenAddress: string) => {
   useEffect(() => {
     resetProps();
     getSingleTokenTransactions();
-  }, []);
+  }, [getSingleTokenTransactions]);
 
   return {
     transactionList: list,

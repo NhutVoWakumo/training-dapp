@@ -22,13 +22,6 @@ export const CustomPagination = ({
   );
 
   return (
-    <NextUIPagination
-      isCompact
-      showControls
-      showShadow
-      color="secondary"
-      {...props}
-      total={pages}
-    />
+    <NextUIPagination showShadow color="secondary" {...props} total={pages} />
   );
 };

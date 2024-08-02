@@ -11,6 +11,7 @@ import {
   ModalHeader,
   Select,
   SelectItem,
+  Skeleton,
   Snippet,
   Tooltip,
   useDisclosure,
@@ -113,6 +114,18 @@ export const CoinBalanceAndChain = () => {
     selectedWallet?.provider,
     triggerLoading,
   ]);
+
+  if (globalLoading)
+    return (
+      <Button
+        className="flex items-center bg-transparent"
+        radius="full"
+        isIconOnly={isBelowMdBreakpoint}
+      >
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="hidden h-8 w-28 md:block" />
+      </Button>
+    );
 
   return (
     <div>
@@ -243,6 +256,7 @@ export const CoinBalanceAndChain = () => {
                         start={0}
                         end={parseFloat(currentBalance)}
                         decimals={3}
+                        duration={1}
                       />
                       <p>{currentChainData?.nativeCurrency.symbol}</p>
                     </div>

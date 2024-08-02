@@ -1,7 +1,6 @@
 import { BigNumberish, formatEther } from "ethers";
+import { IPFS_PROVIDER_URL, chainData } from "../constants";
 import { parseUnits, toBeHex } from "ethers";
-
-import { IPFS_PROVIDER_URL } from "../constants";
 
 export const formatBalance = (rawBalance: string) => {
   const balance = (parseInt(rawBalance) / 1000000000000000000).toFixed(2);
@@ -51,4 +50,8 @@ export const parseIPFSToNormalUrl = (uri: string) => {
   }
 
   return uri;
+};
+
+export const getChainData = (chainId: string) => {
+  return chainData.find((chain) => chain.chainId.toString() === chainId);
 };

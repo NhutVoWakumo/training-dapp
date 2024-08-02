@@ -5,7 +5,7 @@ import { formatAddress } from "@/app/utils";
 
 export function generateMetadata({ params }: TokenDetailProps): Metadata {
   return {
-    title: `Collection ${formatAddress(params.address)}`,
+    title: `Token ${formatAddress(params.address)}`,
   };
 }
 

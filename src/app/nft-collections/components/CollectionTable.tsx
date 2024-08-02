@@ -85,7 +85,7 @@ export const CollectionTable = () => {
           ) : null,
 
         classNames: {
-          base: "max-h-[520px] md:overflow-x-hidden overflow-x-scroll",
+          base: "md:overflow-x-hidden overflow-x-scroll",
         },
       }}
       tableBodyProps={{
