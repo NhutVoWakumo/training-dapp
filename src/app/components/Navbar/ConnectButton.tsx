@@ -14,11 +14,17 @@ import { WalletConnectButton } from "./WalletConnectButton";
 import { useWalletProvider } from "@/app/hooks";
 
 export const ConnectButton = () => {
-  const { wallets, connectInstalledWallet } = useWalletProvider();
+  const { wallets, connectInstalledWallet, globalLoading } =
+    useWalletProvider();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   return (
     <div>
-      <Button color="secondary" variant="flat" onPress={onOpen}>
+      <Button
+        color="secondary"
+        variant="flat"
+        onPress={onOpen}
+        isLoading={globalLoading}
+      >
         Connect Wallet
       </Button>
       <Modal
@@ -44,6 +50,9 @@ export const ConnectButton = () => {
                         <Image
                           src={provider.info.icon}
                           alt={provider.info.name}
+                          width={35}
+                          height={35}
+                          className="object-contain"
                         />
                       }
                     >

@@ -27,6 +27,8 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
   const [localLoading, setLocalLoading] = useState<boolean>(false);
   const [currentInfuraChainName, setCurrentInfuraChainName] =
     useState<string>();
+  const [shouldRedirectToTable, setShouldRedirectToTable] =
+    useState<boolean>(false);
 
   const {
     processErrorMessage,
@@ -42,6 +44,39 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
       process.env.NEXT_PUBLIC_INFURA_API_KEY,
     );
   }, [currentInfuraChainName]);
+
+  const getSingleTokenMetadata = useCallback(
+    async (address: string): Promise<Partial<ITokenData> | undefined> => {
+      if (!chainId) return;
+      setLocalLoading(true);
+
+      try {
+        const { raw } = await Moralis.EvmApi.token.getTokenMetadata({
+          chain: formatChainAsHex(Number(chainId)),
+          addresses: [address],
+        });
+
+        if (raw.length) {
+          const data = raw[0];
+          return {
+            symbol: data.symbol as string,
+            address: data.address as string,
+            decimals: Number(data.decimals).toString(),
+            logoUrl: data.logo ?? "",
+            name: data.name,
+          };
+        }
+
+        return undefined;
+      } catch (error) {
+        console.error(error);
+        processErrorMessage(error);
+      } finally {
+        setLocalLoading(false);
+      }
+    },
+    [chainId, processErrorMessage],
+  );
 
   const getTokenList = useCallback(
     async (accountAddress: string) => {
@@ -188,6 +223,7 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
 
     if (!chain || !account) {
       setTokenList({});
+      setShouldRedirectToTable(true);
       return;
     }
 
@@ -205,5 +241,7 @@ export const useERC20Tokens = ({ chainId, account }: UseErc20TokensProps) => {
     transferToken,
     importTokenToWallet,
     form,
+    shouldRedirectToTable,
+    getSingleTokenMetadata,
   };
 };

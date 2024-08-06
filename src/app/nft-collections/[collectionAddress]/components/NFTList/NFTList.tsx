@@ -1,5 +1,4 @@
 import {
-  Button,
   Card,
   CardFooter,
   CardHeader,
@@ -63,8 +62,8 @@ export const NFTList = ({
                   src={nft.display_image_url}
                   alt={nft.identifier}
                   className="aspect-square w-full object-cover"
-                  removeWrapper
                   isZoomed
+                  loading="lazy"
                 />
               ) : (
                 <>
@@ -78,6 +77,7 @@ export const NFTList = ({
                     alt={nft.identifier}
                     className="aspect-square w-full object-cover blur-lg"
                     removeWrapper
+                    loading="lazy"
                   />
                 </>
               )}
